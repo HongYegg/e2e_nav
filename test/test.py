@@ -16,7 +16,7 @@ from PIL import Image
 from PIL import Image
 from torch.utils.tensorboard import SummaryWriter
 
-from train.dataloader import CARLA_Data
+from train.data_load import CARLA_Data
 from model_net.model_net import model_all
 
 

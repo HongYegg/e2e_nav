@@ -6,6 +6,9 @@ import math
 import cv2
 import torch
 import random
+
+import matplotlib.pyplot as plt
+
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
@@ -18,26 +21,21 @@ transform_lidar = transforms.Compose([transforms.ToTensor()])
 
 class ATTACK():
 
-    def __init__(self, dis_att = 8, pianyi_att = 3):
+    def __init__(self):
         self.fore_image = np.array(Image.open('./others/car_att.png'))
-        self.x = dis_att # 距离
-        self.l_r = pianyi_att # 0到6对应-3到3
+        self.x = 8 # 距离
+        self.l_r =3 # 0到6对应-3到3
 
-    def attack_img_1(self, img, disturb_img):
-        if disturb_img == 1:  # 语义干扰
-            img = self.img_add_semantics_disturb(self.fore_image, img, self.x, self.l_r)
-            return img
-
-    def img_add_semantics_disturb(self, fore_image1, base_image1, x, l_r):
+    def att_img_semantic(self, base_image, x, l_r):
         """
         将抠出的人物图像换背景
         fore_image: 前景图片，抠出的人物图片
         base_image: 背景图片
         """
 
-        fore_image = cv2.resize(fore_image1, (200, 209))
+        fore_image = cv2.resize(self.fore_image, (200, 209))
         # fore_image =fore_image1
-        base_image = base_image1.copy()
+        base_image = base_image.copy()
         a = fore_image.shape
         resize = 2.628909478541378 / x + 2.3306802063092498 / (x * x) + 20.667384434972657 / (
                     x * x * x) - 0.03
@@ -131,6 +129,41 @@ class ATTACK():
         return base_image
 
 
+    def att_lidar_semantic(self,lidar, dis_att = 5, pianyi_att = 0):
+        pingyi = pianyi_att-3-1.5
+        distance_car = dis_att
+
+        kuan_car = 0.9
+        gao_car = 1.8
+        fai = -math.atan(3 / distance_car)
+        thea = np.pi / 2 + math.atan(pingyi / distance_car)
+
+        change_thea = np.pi / 2 + math.atan((2 * kuan_car + pingyi) / distance_car)
+        change_fai = -math.atan((3 - gao_car) / distance_car)
+
+        self.x1 = int((thea + np.pi) * (180 / np.pi) * 1.25) - 1
+        self.x2 = int((change_thea + np.pi) * (180 / np.pi) * 1.25) - 1
+
+        self.y1 = 64 - int((fai + (np.pi/6)) * (180 / np.pi) * 1.6) - 1
+        self.y2 = 64 - int((change_fai + (np.pi/6)) * (180 / np.pi) * 1.6) - 1
+
+
+        for ii in range(self.x1, self.x2):
+            for jj in range(self.y2, self.y1):
+                thea_temp = ((ii + 1)/1.25)*(np.pi/180)-np.pi
+                fai_temp = ((64-(jj+1))/1.6)*(np.pi/180)-(np.pi/6)
+                # print('ww', dis_att, lidar[jj, ii-106], (distance_car / (math.cos(abs(thea_temp - np.pi / 2)) * math.cos(abs(fai_temp))))/100)
+                if lidar[0, jj, ii-275] < 1 - (distance_car / (math.cos(abs(thea_temp - np.pi / 2)) * math.cos(abs(fai_temp))))/60:
+                    lidar[0, jj, ii-275] = 1 - (distance_car / (math.cos(abs(thea_temp - np.pi / 2)) * math.cos(abs(fai_temp))))/60
+                    # print('w', lidar[jj, ii-275])
+                    # lidar[jj, ii - 275] = 0
+
+        return lidar
+
+
+attack = ATTACK()
+
+
 class CARLA_Data(Dataset):
 
     def __init__(self, root_path,batch_size):
@@ -209,7 +242,7 @@ class CARLA_Data(Dataset):
 
                     num_seq = (len(os.listdir(route_dir + "/rgb_front/")) - self.pred_len - 2) // self.seq_len
 
-                    for seq in range(num_seq):
+                    for seq in range(num_seq-20):
 
                         xs = []
                         ys = []
@@ -450,14 +483,14 @@ class CARLA_Data(Dataset):
             data_new['imgs_clean'].append(transform_img(Image.open(seq_fronts_r[i])))
             data_new['imgs_clean'].append(transform_img(Image.open(seq_fronts_rf[i])))
 
-            data_new['imgs_clean_ori'].append(Image.open(seq_fronts[i]))
-            data_new['imgs_clean_ori'].append(Image.open(seq_fronts_lf[i]))
-            data_new['imgs_clean_ori'].append(Image.open(seq_fronts_l[i]))
-            data_new['imgs_clean_ori'].append(Image.open(seq_fronts_lh[i]))
-            data_new['imgs_clean_ori'].append(Image.open(seq_fronts_h[i]))
-            data_new['imgs_clean_ori'].append(Image.open(seq_fronts_rh[i]))
-            data_new['imgs_clean_ori'].append(Image.open(seq_fronts_r[i]))
-            data_new['imgs_clean_ori'].append(Image.open(seq_fronts_rf[i]))
+            data_new['imgs_clean_ori'].append(np.array(plt.imread(seq_fronts[i])))
+            data_new['imgs_clean_ori'].append(np.array(plt.imread(seq_fronts_lf[i])))
+            data_new['imgs_clean_ori'].append(np.array(plt.imread(seq_fronts_l[i])))
+            data_new['imgs_clean_ori'].append(np.array(plt.imread(seq_fronts_lh[i])))
+            data_new['imgs_clean_ori'].append(np.array(plt.imread(seq_fronts_h[i])))
+            data_new['imgs_clean_ori'].append(np.array(plt.imread(seq_fronts_rh[i])))
+            data_new['imgs_clean_ori'].append(np.array(plt.imread(seq_fronts_r[i])))
+            data_new['imgs_clean_ori'].append(np.array(plt.imread(seq_fronts_rf[i])))
 
             lidar_d = np.load(seq_lidars[i]).astype(np.float32)
             data_new['lidars_clean'].append(transform_lidar(lidar_d))
@@ -538,7 +571,7 @@ class CARLA_Data(Dataset):
 
                 # att lidar
                 lidar_att_zhedang = data_new['lidars_att'][att_t * 8 + att_shijiao]
-                lidar_att_zhedang[:, 30:, 30:90] = 0
+                lidar_att_zhedang[:, 16:, 30:90] = 0
 
                 # img_att_zhedang = lidar_att_zhedang.cpu().numpy().transpose(1, 2, 0)
                 # cv2.imshow('lidar_orl', img_att_zhedang)
@@ -549,6 +582,7 @@ class CARLA_Data(Dataset):
 
 
             if att_type == 2:
+                Attack_intensity = random.uniform(0.35, 0.45)
                 # att img
                 img_att_zhedang = data_new['imgs_att'][att_t*8 + att_shijiao]
                 img_att_zhedang = sp_noise(img_att_zhedang, Attack_intensity)
@@ -568,7 +602,7 @@ class CARLA_Data(Dataset):
 
             if att_type == 3:
                 img_att_zhedang = data_new['imgs_att'][att_t*8 + att_shijiao]
-                img_att_zhedang = 0
+                img_att_zhedang[:, :, :] = 0
 
                 # img_att_zhedang = img_att_zhedang.cpu().numpy().transpose(1, 2, 0)
                 # cv2.imshow('img_orl', img_att_zhedang)
@@ -580,7 +614,7 @@ class CARLA_Data(Dataset):
 
                 # att lidar
                 lidar_att_zhedang = data_new['lidars_att'][att_t * 8 + att_shijiao]
-                lidar_att_zhedang = 0
+                lidar_att_zhedang[:, :, :] = 0
 
                 # img_att_zhedang = lidar_att_zhedang.cpu().numpy().transpose(1, 2, 0)
                 # cv2.imshow('lidar_orl', img_att_zhedang)
@@ -651,18 +685,12 @@ class CARLA_Data(Dataset):
             if att_type == 6:
                 # att img
                 img_att_ori = data_new['imgs_clean_ori'][att_t*8 + att_shijiao]
-                img_att_ori = att_img_yvyi(img_att_ori, 8, 3)
-                data_new['imgs_att'][att_t * 8 + att_shijiao] = transform_img(img_att_ori)
+                img_att_ori = attack.att_img_semantic(img_att_ori, 8, 3)
+                data_new['imgs_att'][att_t * 8 + att_shijiao] = transform_img(Image.fromarray(np.uint8(img_att_ori*255)))
 
                 # att lidar
                 lidar_att = data_new['lidars_att'][att_t * 8 + att_shijiao]
-                lidar_att = att_lidar_yvyi(lidar_att, 8, 3)
-
-                # img_att_zhedang = lidar_att_zhedang.cpu().numpy().transpose(1, 2, 0)
-                # cv2.imshow('lidar_orl', img_att_zhedang)
-                # cv2.waitKey(10)
-                # time.sleep(6)
-
+                lidar_att = attack.att_lidar_semantic(lidar_att, 8, 3)
                 data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att
 
 
@@ -810,38 +838,4 @@ def sp_noise(img, prob):
 def bright_contrast(a, b, img):
     img_out = torch.clip((a * img + b), 0, 1)
     return img_out
-
-def att_img_yvyi(img, dis_att, pianyi_att):
-    img = np.array(img)
-    attack = ATTACK(dis_att, pianyi_att)
-    img = attack.attack_img_1(img, 1)
-    img = Image.fromarray(img)
-    return img
-
-def att_lidar_yvyi(lidar, dis_att, pianyi_att):
-    pingyi = pianyi_att - 3 - 1.5
-    distance_car = dis_att
-
-    kuan_car = 0.9
-    gao_car = 1.8
-    fai = -math.atan(3 / distance_car)
-    thea = np.pi / 2 + math.atan(pingyi / distance_car)
-
-    change_thea = np.pi / 2 + math.atan((2 * kuan_car + pingyi) / distance_car)
-    change_fai = -math.atan((3 - gao_car) / distance_car)
-
-    x1 = int((thea + np.pi) * (180 / np.pi) * 1.25) - 1
-    x2 = int((change_thea + np.pi) * (180 / np.pi) * 1.25) - 1
-    y1 = 64 - int((fai + (np.pi/6)) * (180 / np.pi) * 1.6) - 1
-    y2 = 64 - int((change_fai + (np.pi/6)) * (180 / np.pi) * 1.6) - 1
-
-    for ii in range(x1, x2):
-        for jj in range(y2, y1):
-            thea_temp = ((ii + 1)/1.25)*(np.pi/180)-np.pi
-            fai_temp = ((64-(jj+1))/1.6)*(np.pi/180)-(np.pi/6)
-            # print('ww', dis_att, lidar[jj, ii-106], (distance_car / (math.cos(abs(thea_temp - np.pi / 2)) * math.cos(abs(fai_temp))))/100)
-            if lidar[jj, ii-275] > (distance_car / (math.cos(abs(thea_temp - np.pi / 2)) * math.cos(abs(fai_temp))))/60:
-                lidar[jj, ii-275] = (distance_car / (math.cos(abs(thea_temp - np.pi / 2)) * math.cos(abs(fai_temp))))/60
-                # print('w', lidar[jj, ii-106])
-    return lidar
 

@@ -21,16 +21,15 @@ from model_net.model_net import model_all
 
 
 if __name__ == '__main__':
-    batchsize = 2
+    batchsize = 24
     lr = 0.00001
     device = 'cuda:0'
 
-    loss_writer = './log/0831'
+    loss_writer = './log/0901'
     writer = SummaryWriter(log_dir=loss_writer)
 
     train_data = ['./dataset']
 
-    # train_data = ['./dataset_test']
     train_data = CARLA_Data(root_path=train_data, batch_size=batchsize)
     dataloader_train = torch.utils.data.DataLoader(train_data, batch_size=batchsize, shuffle=True, num_workers=8)
 
@@ -82,17 +81,17 @@ if __name__ == '__main__':
             step = step + 1
 
             train_data.rand()
-            node_attack = np.array([data['att_nodes'][xxx][0] for xxx in range(6)])
+            node_attack = np.array([data['att_nodes'][xxx][0] for xxx in range(8)])
 
             A_label = A_orl.copy()
-            A_label[:, [node_attack[0:3]]] = 0
+            A_label[:, [node_attack[0:4]]] = 0
             A = torch.tensor(A_orl).to(device)
             A_label = torch.tensor(A_label).to(device)
 
-            class_label = np.zeros((6, 2))
+            class_label = np.zeros((8, 2))
             class_label[:, 0] = 1
-            class_label[0:3, 0] = 0
-            class_label[0:3, 1] = 1
+            class_label[0:4, 0] = 0
+            class_label[0:4, 1] = 1
             class_label = torch.tensor(class_label).to(device)
 
             optimizer.zero_grad()
@@ -107,7 +106,7 @@ if __name__ == '__main__':
             loss_c = criterion(model_all.node_class[:, node_attack].float(), class_labels.float())
             A_labels = torch.stack([A_label for xxxx in range(model_all.batch)], dim=0)
             e_clean = torch.sum(torch.mul(model_all.adj_rec, A_labels)) / 21
-            e_att = torch.sum(model_all.adj_rec[:, :, node_attack[0:3]]) / 3
+            e_att = torch.sum(model_all.adj_rec[:, :, node_attack[0:4]]) / 4
             loss_e = torch.exp((- e_clean + e_att) / 24)
             loss_adj_rec = loss_c + loss_e
 
@@ -139,7 +138,7 @@ if __name__ == '__main__':
             optimizer.step()
 
         if epoch % 5 == 0:
-            torch.save(model_all.state_dict(), os.path.join('/home/why/PycharmProjects/lz_robio_v2/model/', str(epoch) + 'model.pth'))
+            torch.save(model_all.state_dict(), os.path.join('./trained_models', str(epoch) + 'model.pth'))
 
     writer.close()
 

@@ -16,7 +16,7 @@ from PIL import Image
 from PIL import Image
 from torch.utils.tensorboard import SummaryWriter
 
-from train.data_load import CARLA_Data
+from data_load import CARLA_Data
 from model_net.model_net import model_all
 
 
@@ -25,15 +25,7 @@ if __name__ == '__main__':
     lr = 0.00001
     device = 'cuda:0'
 
-    # loss_writer = './log/0818'
-    # writer = SummaryWriter(log_dir=loss_writer)
-
-    # train_data = ['/home/why/PycharmProjects/transfuser-main/data/expert/town02_long/',
-    #               '/home/why/PycharmProjects/transfuser-main/data/expert/town02_short/',
-    #               '/home/why/PycharmProjects/transfuser-main/data/expert/town03_long/',
-    #               '/home/why/PycharmProjects/transfuser-main/data/expert/town03_short/']
-
-    train_data = ['/home/why/PycharmProjects/lz_robio_v2/dataset_test']
+    train_data = ['']
     train_data = CARLA_Data(root_path=train_data, batch_size=batchsize)
     dataloader_train = torch.utils.data.DataLoader(train_data, batch_size=batchsize, shuffle=True, num_workers=8)
 
@@ -68,10 +60,10 @@ if __name__ == '__main__':
 
     model_all = model_all().to(device)
     # optimizer = optim.Adam(model_all.parameters(), lr=lr)
-    # model_all.model_vae.load_state_dict(torch.load('/home/why/PycharmProjects/lz_robio/model/vae_459', map_location=device))
-    # model_all.model_adj_rec.load_state_dict(torch.load('/home/why/PycharmProjects/lz_robio/model/gat_28.pth'))
-    # model_all.model_feature_rec.load_state_dict(torch.load('/home/why/PycharmProjects/lz_robio/model/rec_84.pth'))
-    # model_all.model_nav.load_state_dict(torch.load('/home/why/PycharmProjects/lz_robio/model/nav_20.pth'))
+    # model_all.model_vae.load_state_dict(torch.load('', map_location=device))
+    # model_all.model_adj_rec.load_state_dict(torch.load(''))
+    # model_all.model_feature_rec.load_state_dict(torch.load(''))
+    # model_all.model_nav.load_state_dict(torch.load(''))
     model_all.eval()
 
     # criterion_vae = torch.nn.MSELoss(reduction='sum')
@@ -84,23 +76,23 @@ if __name__ == '__main__':
     for epoch in range(10):
         print('epoch: ', epoch)
         loss_test = []
-        model_all.load_state_dict(torch.load(os.path.join('/home/why/PycharmProjects/lz_robio_v2/model', str(25 + epoch*5) + 'model.pth')))
+        model_all.load_state_dict(torch.load(os.path.join('./trained_models', str(25 + epoch*5) + 'model.pth')))
 
         for i, data in enumerate(tqdm(dataloader_train), 0):
             step = step + 1
 
             train_data.rand()
-            node_attack = np.array([data['att_nodes'][xxx][0] for xxx in range(6)])
+            node_attack = np.array([data['att_nodes'][xxx][0] for xxx in range(8)])
 
             A_label = A_orl.copy()
-            A_label[:, [node_attack[0:3]]] = 0
+            A_label[:, [node_attack[0:4]]] = 0
             A = torch.tensor(A_orl).to(device)
             A_label = torch.tensor(A_label).to(device)
 
-            class_label = np.zeros((6, 2))
+            class_label = np.zeros((8, 2))
             class_label[:, 0] = 1
-            class_label[0:3, 0] = 0
-            class_label[0:3, 1] = 1
+            class_label[0:4, 0] = 0
+            class_label[0:4, 1] = 1
             class_label = torch.tensor(class_label).to(device)
 
             # optimizer.zero_grad()
@@ -115,7 +107,7 @@ if __name__ == '__main__':
             loss_c = criterion(model_all.node_class[:, node_attack].float(), class_labels.float())
             A_labels = torch.stack([A_label for xxxx in range(model_all.batch)], dim=0)
             e_clean = torch.sum(torch.mul(model_all.adj_rec, A_labels)) / 21
-            e_att = torch.sum(model_all.adj_rec[:, :, node_attack[0:3]]) / 3
+            e_att = torch.sum(model_all.adj_rec[:, :, node_attack[0:4]]) / 4
             loss_e = torch.exp((- e_clean + e_att) / 24)
             loss_adj_rec = loss_c + loss_e
 
@@ -140,19 +132,6 @@ if __name__ == '__main__':
 
             loss_test.append(loss_nav.data)
 
-            # writer.add_scalar('train/loss', loss, step)
-            # writer.add_scalar('train/loss_vae', loss_vae, step)
-            # writer.add_scalar('train/loss_adj_rec', loss_adj_rec, step)
-            # writer.add_scalar('train/loss_feature_rec', loss_feature_rec, step)
-
-            # loss.backward()
-            # optimizer.step()
-
         loss_model.append(torch.mean(torch.tensor(loss_test)))
         print('loss_model:', loss_model)
-
-        # if epoch % 5 == 0:
-        #     torch.save(model_all.state_dict(), os.path.join('/home/why/PycharmProjects/lz_robio_v2/model/', str(epoch) + 'model.pth'))
-
-    # writer.close()
 

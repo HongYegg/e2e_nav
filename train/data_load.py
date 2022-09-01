@@ -23,16 +23,8 @@ class ATTACK():
 
     def __init__(self):
         self.fore_image = np.array(Image.open('./others/car_att.png'))
-        self.x = 8 # 距离
-        self.l_r =3 # 0到6对应-3到3
 
     def att_img_semantic(self, base_image, x, l_r):
-        """
-        将抠出的人物图像换背景
-        fore_image: 前景图片，抠出的人物图片
-        base_image: 背景图片
-        """
-
         fore_image = cv2.resize(self.fore_image, (200, 209))
         # fore_image =fore_image1
         base_image = base_image.copy()
@@ -68,7 +60,7 @@ class ATTACK():
             left_right = int(left_right_front + 3*(left_right_front - left_right_l_r)/3)
         x = a[0] * resize
         y = a[1] * resize
-        # 读入图片
+
         if up_down + int(x) >= 300 and left_right <= 0:
             base_part = base_image[up_down:, :left_right + int(y), :]
             fore_image = cv2.resize(fore_image, (int(y), int(x)))
@@ -87,7 +79,7 @@ class ATTACK():
         else:
             base_part = base_image[up_down:up_down + int(x), left_right:left_right + int(y), :]
             fore_image = cv2.resize(fore_image, (base_part.shape[1], base_part.shape[0]))
-        # 图片加权合成
+
         scope_map = fore_image[:, :, -1] / 255
         scope_map = scope_map[:, :, np.newaxis]
         scope_map = np.repeat(scope_map, repeats=3, axis=2)
@@ -206,7 +198,7 @@ class CARLA_Data(Dataset):
         self.front_lh = []
 
         for sub_root in root_path:
-            preload_file = './local_files/dataset_0818.npy'
+            preload_file = './local_files/dataset_0901.npy'
             if True:
                 preload_front = []
                 preload_lidar = []
@@ -431,21 +423,16 @@ class CARLA_Data(Dataset):
         # t->0, 1, 2(now_t)
 
         # 0~7:t(0); 8~15:t(1), 16~23:t(2)   shijiao: f, lf, l, lh, h, rh, r, rf
+
         # att_nodes = np.array([0, 1, 2, 3, 4, 5])
+
         # choice_nodes = random.sample(range(0, 24), 6)
-        # print('whyyyy', choice_nodes)
+
         if self.counter%self.batch_size==0:
             self.rand()
-        att_nodes = self.choice_nodes[0:3]
-
-        # print('atttttttt', att_nodes)
+        att_nodes = self.choice_nodes[0:4]
 
         self.counter+=1
-
-        # print('counter',self.counter)
-        # print('self.choice_nodes2', self.choice_nodes)
-
-
 
         # clean, att; shijiao:
         data_new = dict()
@@ -555,17 +542,14 @@ class CARLA_Data(Dataset):
         for att_node in att_nodes:
             att_t = att_node // 8
             att_shijiao = att_node % 8
-            # att_type = np.random.randint(1, 7)  # 1:Shelter; 2:noise; 3:Information all black; 4:Brightness and contrast; 5:Frame overlap; 6:Semantic attacks
-            att_type = 1
+            att_type = np.random.randint(1, 7)  # 1:Shelter; 2:noise; 3:Information all black; 4:Brightness and contrast; 5:Frame overlap; 6:Semantic attacks
+            # att_type = 1
             if att_type == 1:
                 img_att_zhedang = data_new['imgs_att'][att_t*8 + att_shijiao]
                 img_att_zhedang[:, 32:, 32:96] = 0
 
                 # img_att_zhedang = img_att_zhedang.cpu().numpy().transpose(1, 2, 0)
                 # cv2.imshow('img_orl', img_att_zhedang)
-                # cv2.waitKey(10)
-                # time.sleep(6)
-                # print(img_att_zhedang.shape)
 
                 data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att_zhedang
 
@@ -591,36 +575,17 @@ class CARLA_Data(Dataset):
                 # att lidar
                 lidar_att_zhedang = data_new['lidars_att'][att_t * 8 + att_shijiao]
                 lidar_att_zhedang = sp_noise(lidar_att_zhedang, Attack_intensity)
-
-                # img_att_zhedang = lidar_att_zhedang.cpu().numpy().transpose(1, 2, 0)
-                # cv2.imshow('lidar_orl', img_att_zhedang)
-                # cv2.waitKey(10)
-                # time.sleep(6)
-
                 data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang
 
 
             if att_type == 3:
                 img_att_zhedang = data_new['imgs_att'][att_t*8 + att_shijiao]
                 img_att_zhedang[:, :, :] = 0
-
-                # img_att_zhedang = img_att_zhedang.cpu().numpy().transpose(1, 2, 0)
-                # cv2.imshow('img_orl', img_att_zhedang)
-                # cv2.waitKey(10)
-                # time.sleep(6)
-                # print(img_att_zhedang.shape)
-
                 data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att_zhedang
 
                 # att lidar
                 lidar_att_zhedang = data_new['lidars_att'][att_t * 8 + att_shijiao]
                 lidar_att_zhedang[:, :, :] = 0
-
-                # img_att_zhedang = lidar_att_zhedang.cpu().numpy().transpose(1, 2, 0)
-                # cv2.imshow('lidar_orl', img_att_zhedang)
-                # cv2.waitKey(10)
-                # time.sleep(6)
-
                 data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang
 
 
@@ -633,18 +598,12 @@ class CARLA_Data(Dataset):
                 # att lidar
                 lidar_att_zhedang = data_new['lidars_att'][att_t * 8 + att_shijiao]
                 lidar_att_zhedang = bright_contrast(1.5, 0.5, lidar_att_zhedang)
-
-                # img_att_zhedang = lidar_att_zhedang.cpu().numpy().transpose(1, 2, 0)
-                # cv2.imshow('lidar_orl', img_att_zhedang)
-                # cv2.waitKey(10)
-                # time.sleep(6)
-
                 data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang
 
 
             if att_type == 5:
                 if att_t==0:
-                # att img
+                    # att img
                     img_att_zhedang_t0 = data_new['imgs_att'][att_t*8 + att_shijiao]
                     img_att_zhedang_t1 = data_new['imgs_att'][(att_t+1)*8 + att_shijiao]
                     img_att_zhedang_t0 = (img_att_zhedang_t0 + img_att_zhedang_t1)/2
@@ -654,16 +613,10 @@ class CARLA_Data(Dataset):
                     lidar_att_zhedang_t0 = data_new['lidars_att'][att_t * 8 + att_shijiao]
                     lidar_att_zhedang_t1 = data_new['lidars_att'][(att_t+1) * 8 + att_shijiao]
                     lidar_att_zhedang_t0 = (lidar_att_zhedang_t0 + lidar_att_zhedang_t1)/2
-
-                    # img_att_zhedang = lidar_att_zhedang.cpu().numpy().transpose(1, 2, 0)
-                    # cv2.imshow('lidar_orl', img_att_zhedang)
-                    # cv2.waitKey(10)
-                    # time.sleep(6)
-
                     data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang_t0
 
                 else:
-                # att img
+                    # att img
                     img_att_zhedang_t = data_new['imgs_att'][att_t*8 + att_shijiao]
                     img_att_zhedang_t_1 = data_new['imgs_att'][(att_t-1)*8 + att_shijiao]
                     img_att_zhedang_t = (img_att_zhedang_t + img_att_zhedang_t_1)/2
@@ -673,12 +626,6 @@ class CARLA_Data(Dataset):
                     lidar_att_zhedang_t = data_new['lidars_att'][att_t * 8 + att_shijiao]
                     lidar_att_zhedang_t_1 = data_new['lidars_att'][(att_t-1) * 8 + att_shijiao]
                     lidar_att_zhedang_t = (lidar_att_zhedang_t + lidar_att_zhedang_t_1)/2
-
-                    # img_att_zhedang = lidar_att_zhedang.cpu().numpy().transpose(1, 2, 0)
-                    # cv2.imshow('lidar_orl', img_att_zhedang)
-                    # cv2.waitKey(10)
-                    # time.sleep(6)
-
                     data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang_t
 
 
@@ -693,9 +640,7 @@ class CARLA_Data(Dataset):
                 lidar_att = attack.att_lidar_semantic(lidar_att, 8, 3)
                 data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att
 
-
         data_new['att_nodes'] = self.choice_nodes
-
 
         # target_point and waypoints
         seq_x = self.x[index]
@@ -742,6 +687,7 @@ class CARLA_Data(Dataset):
         # cv2.waitKey(1000)
 
         return data_new
+
     def rand(self):
         randt1 = random.randint(0,2)
 
@@ -753,9 +699,7 @@ class CARLA_Data(Dataset):
         else:
             cleannode1 = ((randt1 - 1) % 3) * 8
 
-        other_views = random.sample(range(1, 8), 2)
-        # for xxx in range(50):
-        #     print('xxx',random.sample(range(1, 3), 2))
+        other_views = random.sample(range(1, 8), 3)
 
         att_v2 = other_views[0]
         randt2 = random.randint(0, 2)
@@ -775,9 +719,16 @@ class CARLA_Data(Dataset):
         else:
             cleannode3 = (attnode3 - 8) % 24
 
-        self.choice_nodes = [attnode1,attnode2,attnode3, cleannode1, cleannode2,cleannode3]
-        # print('choice_nodes', self.choice_nodes)
-        # self.choice_nodes = random.sample(range(0, 24), 6)
+        att_v4 = other_views[2]
+        randt4 = random.randint(0, 2)
+        attnode4 = randt4 * 8 + att_v4
+        r4 = random.randint(0, 1)
+        if r4 == 0:
+            cleannode4 = (attnode4 + 8) % 24
+        else:
+            cleannode4 = (attnode4 - 8) % 24
+
+        self.choice_nodes = [attnode1, attnode2, attnode3, attnode4, cleannode1, cleannode2, cleannode3, cleannode4]
 
 
 def transform_2d_points(xyz, r1, t1_x, t1_y, r2, t2_x, t2_y):
@@ -807,24 +758,6 @@ def transform_2d_points(xyz, r1, t1_x, t1_y, r2, t2_x, t2_y):
 
 
 def sp_noise(img, prob):
-    '''
-    添加椒盐噪声
-    prob:噪声比例 (0~0.5)。其值等于0.5时，全图全是噪声
-    '''
-    # output = torch.zeros(img.shape)
-    #
-    # # print(output.shape)
-    # thres = 1 - prob
-    # for i in range(img.shape[1]):
-    #     for j in range(img.shape[2]):
-    #         rdn = random.random()
-    #         if rdn < prob:
-    #             output[:, i, j] = 0
-    #         elif rdn > thres:
-    #             output[:, i, j] = 1
-    #         else:
-    #             output[:, i, j] = img[:, i, j]
-    #
     thres = 1 - prob
     img = img.numpy()
     mask = np.random.uniform(low=0.0, high=1.0, size=img.shape)

@@ -6,7 +6,7 @@ log/
 Pre-trained_models/
 trained_models/
 local_files/
-#dataset/
+dataset/
 
 ### Python ###
 # Byte-compiled / optimized / DLL files

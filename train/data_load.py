@@ -41,7 +41,7 @@ class ATTACK():
         thea = np.pi / 2 + math.atan(pingyi / distance_car)
         self.x1 = int((thea + np.pi) * (180 / np.pi) * 1.25) - 1
         left_right_l_r = int(((self.x1 - 275) / 122) * 400)
-        
+
         if l_r == 3:
             left_right = int(left_right_front)  # 正前方
         # if l_r == 2:
@@ -59,24 +59,27 @@ class ATTACK():
         x = a[0] * resize
         y = a[1] * resize
 
-        if up_down + int(x) >= 300 and left_right <= 0:
-            base_part = base_image[up_down:, :left_right + int(y), :]
-            fore_image = cv2.resize(fore_image, (int(y), int(x)))
-        elif up_down + int(x) >= 300 and left_right + int(y) >= 400:
-            base_part = base_image[up_down:, left_right:, :]
-            fore_image = cv2.resize(fore_image, (int(y), int(x)))
-        elif up_down + int(x) >= 300 and 0 < left_right and left_right + int(y) < 400:
-            base_part = base_image[up_down:, left_right:left_right + int(y), :]
-            fore_image = cv2.resize(fore_image, (int(y), int(x)))
-        elif left_right <= 0 and up_down + int(x) < 300:
-            base_part = base_image[up_down:, :left_right + int(y), :]
-            fore_image = cv2.resize(fore_image, (int(y), int(x)))
-        elif left_right + int(y) >= 400 and up_down + int(x) < 300:
-            base_part = base_image[up_down:up_down + int(x), left_right:, :]
-            fore_image = cv2.resize(fore_image, (int(y), int(x)))
-        else:
-            base_part = base_image[up_down:up_down + int(x), left_right:left_right + int(y), :]
-            fore_image = cv2.resize(fore_image, (base_part.shape[1], base_part.shape[0]))
+        # if up_down + int(x) >= 300 and left_right <= 0:
+        #     base_part = base_image[up_down:, :left_right + int(y), :]
+        #     fore_image = cv2.resize(fore_image, (int(y), int(x)))
+        # elif up_down + int(x) >= 300 and left_right + int(y) >= 400:
+        #     base_part = base_image[up_down:, left_right:, :]
+        #     fore_image = cv2.resize(fore_image, (int(y), int(x)))
+        # elif up_down + int(x) >= 300 and 0 < left_right and left_right + int(y) < 400:
+        #     base_part = base_image[up_down:, left_right:left_right + int(y), :]
+        #     fore_image = cv2.resize(fore_image, (int(y), int(x)))
+        # elif left_right <= 0 and up_down + int(x) < 300:
+        #     base_part = base_image[up_down:, :left_right + int(y), :]
+        #     fore_image = cv2.resize(fore_image, (int(y), int(x)))
+        # elif left_right + int(y) >= 400 and up_down + int(x) < 300:
+        #     base_part = base_image[up_down:up_down + int(x), left_right:, :]
+        #     fore_image = cv2.resize(fore_image, (int(y), int(x)))
+        # else:
+        #     base_part = base_image[up_down:up_down + int(x), left_right:left_right + int(y), :]
+        #     fore_image = cv2.resize(fore_image, (base_part.shape[1], base_part.shape[0]))
+
+        base_part = base_image[up_down:up_down + int(x), left_right:left_right + int(y), :]
+        fore_image = cv2.resize(fore_image, (base_part.shape[1], base_part.shape[0]))
 
         scope_map = fore_image[:, :, -1] / 255
         scope_map = scope_map[:, :, np.newaxis]
@@ -87,35 +90,38 @@ class ATTACK():
                 for z in range(res_.shape[2]):
                     if res_[i][p][z] != 0.:
                         res_[i][p][z] = fore_image[i][p][z] / 255
-        if up_down + int(x) >= 300 and 0 < left_right and left_right + int(y) < 400:
-            base_part = cv2.copyMakeBorder(base_part, 0, int(up_down + int(x) - 300), 0, 0,
-                                           cv2.BORDER_CONSTANT, value=[0, 0, 0])
-        elif up_down + int(x) >= 300 and left_right <= 0:
-            base_part = cv2.copyMakeBorder(base_part, 0, int(up_down + int(x) - 300), int(-left_right), 0,
-                                           cv2.BORDER_CONSTANT, value=[0, 0, 0])
-        elif up_down + int(x) >= 300 and left_right + int(y) >= 400:
-            base_part = cv2.copyMakeBorder(base_part, 0, int(up_down + int(x) - 300), 0, int(left_right + int(y) - 400),
-                                           cv2.BORDER_CONSTANT, value=[0, 0, 0])
-        elif left_right <= 0 and up_down + int(x) < 300:
-            base_part = cv2.copyMakeBorder(base_part, 0, 0, int(-left_right), 0,
-                                           cv2.BORDER_CONSTANT, value=[0, 0, 0])
-        elif left_right + int(y) >= 400 and up_down + int(x) < 300:
-            base_part = cv2.copyMakeBorder(base_part, 0, 0, 0, int(left_right + int(y) - 400),
-                                           cv2.BORDER_CONSTANT, value=[0, 0, 0])
+        # if up_down + int(x) >= 300 and 0 < left_right and left_right + int(y) < 400:
+        #     base_part = cv2.copyMakeBorder(base_part, 0, int(up_down + int(x) - 300), 0, 0,
+        #                                    cv2.BORDER_CONSTANT, value=[0, 0, 0])
+        # elif up_down + int(x) >= 300 and left_right <= 0:
+        #     base_part = cv2.copyMakeBorder(base_part, 0, int(up_down + int(x) - 300), int(-left_right), 0,
+        #                                    cv2.BORDER_CONSTANT, value=[0, 0, 0])
+        # elif up_down + int(x) >= 300 and left_right + int(y) >= 400:
+        #     base_part = cv2.copyMakeBorder(base_part, 0, int(up_down + int(x) - 300), 0, int(left_right + int(y) - 400),
+        #                                    cv2.BORDER_CONSTANT, value=[0, 0, 0])
+        # elif left_right <= 0 and up_down + int(x) < 300:
+        #     base_part = cv2.copyMakeBorder(base_part, 0, 0, int(-left_right), 0,
+        #                                    cv2.BORDER_CONSTANT, value=[0, 0, 0])
+        # elif left_right + int(y) >= 400 and up_down + int(x) < 300:
+        #     base_part = cv2.copyMakeBorder(base_part, 0, 0, 0, int(left_right + int(y) - 400),
+        #                                    cv2.BORDER_CONSTANT, value=[0, 0, 0])
 
         res_image = res_ + np.multiply((1 - scope_map), base_part)
-        if up_down + int(x) >= 300 and 0 < left_right and left_right + int(y) < 400:
-            base_image[up_down:, left_right:left_right + int(y)] = res_image[:300 - up_down, :]
-        elif up_down + int(x) >= 300 and left_right <= 0:
-            base_image[up_down:, :left_right + int(y)] = res_image[:300 - up_down, int(-left_right):]
-        elif up_down + int(x) >= 300 and left_right + int(y) >= 400:
-            base_image[up_down:, left_right:] = res_image[:300 - up_down, :400 - left_right]
-        elif left_right <= 0 and up_down + int(x) < 300:
-            base_image[up_down:up_down + int(x), :left_right + int(y)] = res_image[:, int(-left_right):]
-        elif left_right + int(y) >= 400 and up_down + int(x) < 300:
-            base_image[up_down:up_down + int(x), left_right:] = res_image[:, :400 - left_right]
-        else:
-            base_image[up_down:up_down + int(x), left_right:left_right + int(y)] = res_image
+        # if up_down + int(x) >= 300 and 0 < left_right and left_right + int(y) < 400:
+        #     base_image[up_down:, left_right:left_right + int(y)] = res_image[:300 - up_down, :]
+        # elif up_down + int(x) >= 300 and left_right <= 0:
+        #     base_image[up_down:, :left_right + int(y)] = res_image[:300 - up_down, int(-left_right):]
+        # elif up_down + int(x) >= 300 and left_right + int(y) >= 400:
+        #     base_image[up_down:, left_right:] = res_image[:300 - up_down, :400 - left_right]
+        # elif left_right <= 0 and up_down + int(x) < 300:
+        #     base_image[up_down:up_down + int(x), :left_right + int(y)] = res_image[:, int(-left_right):]
+        # elif left_right + int(y) >= 400 and up_down + int(x) < 300:
+        #     base_image[up_down:up_down + int(x), left_right:] = res_image[:, :400 - left_right]
+        # else:
+        #     base_image[up_down:up_down + int(x), left_right:left_right + int(y)] = res_image
+
+        base_image[up_down:up_down + int(x), left_right:left_right + int(y)] = res_image
+
         return base_image
 
 

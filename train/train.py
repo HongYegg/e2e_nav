@@ -52,22 +52,18 @@ if __name__ == '__main__':
     A_8[16:24, 8:16] = np.eye(8)
     A_orl = A_8
 
-    D_adj = np.zeros([24, 24])
-
-    D_1 = np.eye(8)*3
-    D_2 = np.eye(8)*4
-    D_3 = np.eye(8) * 3
-
-    D_adj[0:8, 0:8] = D_1
-    D_adj[8:16, 8:16] = D_2
-    D_adj[16:24, 16:24] = D_3
-
     model_all = model_all().to(device)
-    optimizer = optim.Adam(model_all.parameters(), lr=lr)
-    # model_all.model_vae.load_state_dict(torch.load('./Pre-trained_models/vae_459', map_location=device))
-    # model_all.model_adj_rec.load_state_dict(torch.load('./Pre-trained_models/gat_28.pth'))
-    # model_all.model_feature_rec.load_state_dict(torch.load('./Pre-trained_models/rec_84.pth'))
-    # model_all.model_nav.load_state_dict(torch.load('./Pre-trained_models/nav_20.pth'))
+
+    model_all.model_vae_fixed_parameters.load_state_dict(torch.load('./Pre-trained_models/vae_459', map_location=device))
+    model_all.model_vae.load_state_dict(torch.load('./Pre-trained_models/vae_459', map_location=device))
+    model_all.model_adj_rec.load_state_dict(torch.load('./Pre-trained_models/gat_28.pth'))
+    model_all.model_feature_rec.load_state_dict(torch.load('./Pre-trained_models/rec_84.pth'))
+    model_all.model_nav.load_state_dict(torch.load('./Pre-trained_models/nav_20.pth'))
+
+    for p in model_all.model_vae_fixed_parameters.parameters():
+        p.requires_grad = False
+
+    optimizer = optim.Adam(filter(lambda p: p.requires_grad, model_all.parameters()), lr=lr)
     model_all.train()
 
     # criterion_vae = torch.nn.MSELoss(reduction='sum')

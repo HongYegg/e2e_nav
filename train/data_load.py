@@ -26,15 +26,12 @@ class ATTACK():
 
     def att_img_semantic(self, base_image, x, l_r):
         fore_image = cv2.resize(self.fore_image, (200, 209))
-        # fore_image =fore_image1
         base_image = base_image.copy()
         a = fore_image.shape
         resize = 2.628909478541378 / x + 2.3306802063092498 / (x * x) + 20.667384434972657 / (
                     x * x * x) - 0.03
         up_down = int(-209.7347024653435 / x + 4419.408427353277 / (x * x) - 10687.320528039269 / (
                     x * x * x) + 161.00304815257257)
-        # left_right_l_r = int(-417.96088275291726 / x + 8030.551281447902 / (x * x) - 22947.536015782316 / (
-        #             x * x * x) + 11.786873836587837)
         pingyi = - 1.5
         distance_car = x
         thea_ = np.pi / 2 + math.atan(pingyi / distance_car)
@@ -44,20 +41,21 @@ class ATTACK():
         thea = np.pi / 2 + math.atan(pingyi / distance_car)
         self.x1 = int((thea + np.pi) * (180 / np.pi) * 1.25) - 1
         left_right_l_r = int(((self.x1 - 275) / 122) * 400)
+        
         if l_r == 3:
             left_right = int(left_right_front)  # 正前方
-        if l_r == 2:
-            left_right = int(left_right_front - (left_right_front - left_right_l_r)/3)
-        if l_r == 1:
-            left_right = int(left_right_front - 2*(left_right_front - left_right_l_r)/3)
-        if l_r == 0:
-            left_right = int(left_right_l_r)
-        if l_r == 4:
-            left_right = int(left_right_front + (left_right_front - left_right_l_r)/3)
-        if l_r == 5:
-            left_right = int(left_right_front + 2*(left_right_front - left_right_l_r)/3)
-        if l_r == 6:
-            left_right = int(left_right_front + 3*(left_right_front - left_right_l_r)/3)
+        # if l_r == 2:
+        #     left_right = int(left_right_front - (left_right_front - left_right_l_r)/3)
+        # if l_r == 1:
+        #     left_right = int(left_right_front - 2*(left_right_front - left_right_l_r)/3)
+        # if l_r == 0:
+        #     left_right = int(left_right_l_r)
+        # if l_r == 4:
+        #     left_right = int(left_right_front + (left_right_front - left_right_l_r)/3)
+        # if l_r == 5:
+        #     left_right = int(left_right_front + 2*(left_right_front - left_right_l_r)/3)
+        # if l_r == 6:
+        #     left_right = int(left_right_front + 3*(left_right_front - left_right_l_r)/3)
         x = a[0] * resize
         y = a[1] * resize
 

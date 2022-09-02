@@ -28,6 +28,21 @@ def prox_nuclear(data, alpha):
     return torch.bmm(torch.bmm(U, diag_S), V)
 
 
+def feature_smoothing_batch(adj):
+    
+    rowsum = adj.sum(2)
+    r_inv = torch.flatten(rowsum, 1,-1)
+    D = torch.diag_embed(r_inv)
+    L = D - adj
+    r_inv = r_inv + 1e-3
+    r_inv = r_inv.pow(-1 / 2)
+    r_inv[torch.isinf(r_inv)] = 0.001
+    r_mat_inv = torch.diag_embed(r_inv)
+    L = torch.bmm(torch.bmm(r_mat_inv, L), r_mat_inv)
+
+    return L
+
+
 class Encoder(torch.nn.Module):
     def __init__(self, D_in, H, D_out):
         super(Encoder, self).__init__()
@@ -410,6 +425,7 @@ decoder = Decoder(256, 512, 128*128*3)
 encoder1 = Encoder1(64*122, 512, 256)
 decoder1 = Decoder1(256, 512, 64*122)
 vae = VAE(encoder, decoder, encoder1, decoder1)
+vae_fixed_parameters = VAE(encoder, decoder, encoder1, decoder1)
 
 adj_rec = ADJ_rec(in_features=256, mid_features1=512, hidden=256, mid_feature2=32,
                   out_features=2, dropout=0, alpha=0.2, concat=False)
@@ -423,59 +439,133 @@ model_nav = VaeNav(config_nav, device)
 
 class model_all(nn.Module):
 
-    def __init__(self):
+    def __init__(self, train_model = 0): # 0:all; 1:model_adj_rec; 2:model_feature_rec;
         super(model_all, self).__init__()
+        self.train_model = train_model
+        self.model_vae_fixed_parameters = vae_fixed_parameters
         self.model_vae = vae
         self.model_adj_rec = adj_rec
         self.model_feature_rec = feature_rec
         self.model_nav = model_nav
 
     def forward(self, data, A):
-        imgs_clean_batch = torch.stack(data['imgs_clean'], dim=0)  # 24 * 12 * 3 * 128 *128
-        self.imgs_clean_batch = imgs_clean_batch.view(-1, 3 * 128 * 128).to(device)
-        lidars_clean_batch = torch.stack(data['lidars_clean'], dim=0)  # 24 * 12 * 3 * 128 *128
-        self.lidars_clean_batch = lidars_clean_batch.view(-1, 64 * 122).to(device)
-        vae_feature_label, self.dec_clean_imgs, self.dec_clean_lidars = self.model_vae(self.imgs_clean_batch, self.lidars_clean_batch)
-        self.ll_clean = latent_loss(self.model_vae.z_mean, self.model_vae.z_sigma)
-        self.vae_feature_label = vae_feature_label.view(24, -1, 256).permute(1, 0, 2)
 
-        imgs_att_batch = torch.stack(data['imgs_att'], dim=0)  # 24 * 12 * 3 * 128 *128
-        imgs_att_batch = imgs_att_batch.view(-1, 3 * 128 * 128).to(device)
-        lidars_att_batch = torch.stack(data['lidars_att'], dim=0)  # 24 * 12 * 3 * 128 *128
-        lidars_att_batch = lidars_att_batch.view(-1, 64 * 122).to(device)
+        if self.train_mdoel==0:
+            imgs_clean_batch = torch.stack(data['imgs_clean'], dim=0)  # 24 * 12 * 3 * 128 *128
+            self.imgs_clean_batch = imgs_clean_batch.view(-1, 3 * 128 * 128).to(device)
+            lidars_clean_batch = torch.stack(data['lidars_clean'], dim=0)  # 24 * 12 * 3 * 128 *128
+            self.lidars_clean_batch = lidars_clean_batch.view(-1, 64 * 122).to(device)
+            vae_feature_label, self.dec_clean_imgs, self.dec_clean_lidars = self.model_vae_fixed_parameters(self.imgs_clean_batch, self.lidars_clean_batch)
+            self.ll_clean = latent_loss(self.model_vae_fixed_parameters.z_mean, self.model_vae_fixed_parameters.z_sigma)
+            self.vae_feature_label = vae_feature_label.view(24, -1, 256).permute(1, 0, 2)
 
-        vae_feature_att, dec_stt_imgs, dec_stt_lidars = self.model_vae(imgs_att_batch, lidars_att_batch)
-        vae_feature_att = vae_feature_att.view(24, -1, 256).permute(1, 0, 2)
+            imgs_att_batch = torch.stack(data['imgs_att'], dim=0)  # 24 * 12 * 3 * 128 *128
+            imgs_att_batch = imgs_att_batch.view(-1, 3 * 128 * 128).to(device)
+            lidars_att_batch = torch.stack(data['lidars_att'], dim=0)  # 24 * 12 * 3 * 128 *128
+            lidars_att_batch = lidars_att_batch.view(-1, 64 * 122).to(device)
 
-        self.batch = vae_feature_att.shape[0]
+            vae_feature_att, _, _ = self.model_vae(imgs_att_batch, lidars_att_batch)
+            vae_feature_att = vae_feature_att.view(24, -1, 256).permute(1, 0, 2)
 
-        self.node_class, self.adj_rec = self.model_adj_rec(vae_feature_att, A)
+            self.batch = vae_feature_att.shape[0]
 
-        vae_feature_att0 = vae_feature_att.clone()
+            self.node_class, self.adj_rec = self.model_adj_rec(vae_feature_att, A)
 
-        vae_feature_att0[:, 0:8, :] /= math.sqrt(3)
-        vae_feature_att0[:, 8:16, :] /= 2
-        vae_feature_att0[:, 16:24, :] /= math.sqrt(3)
+            vae_feature_att0 = vae_feature_att.clone()
 
-        vae_feature_att1 = vae_feature_att0.unsqueeze(2)
-        vae_feature_att2 = vae_feature_att0.unsqueeze(1)
-        vae_feature_att3 = vae_feature_att2 - vae_feature_att1
-        vae_feature_att4 = torch.norm(vae_feature_att3, p=2, dim=3)
+            vae_feature_att0[:, 0:8, :] /= math.sqrt(3)
+            vae_feature_att0[:, 8:16, :] /= 2
+            vae_feature_att0[:, 16:24, :] /= math.sqrt(3)
 
-        S_adj_pro = self.adj_rec - vae_feature_att4 * 0.01 / 2
-        S_adj = prox_nuclear(S_adj_pro.detach(), 1).to(device)
-        b_s = S_adj.shape[0]
-        S_adj += torch.eye(24).unsqueeze(0).repeat(b_s, 1, 1).to(device)
+            vae_feature_att1 = vae_feature_att0.unsqueeze(2)
+            vae_feature_att2 = vae_feature_att0.unsqueeze(1)
+            vae_feature_att3 = vae_feature_att2 - vae_feature_att1
+            vae_feature_att4 = torch.norm(vae_feature_att3, p=2, dim=3)
 
-        S_adj[S_adj < 0] = 0
-        S_adj[S_adj > 1] = 1
+            S_adj_pro = self.adj_rec - vae_feature_att4 * 0.01 / 2
+            S_adj = prox_nuclear(S_adj_pro.detach(), 1).to(device)
+            b_s = S_adj.shape[0]
+            S_adj += torch.eye(24).unsqueeze(0).repeat(b_s, 1, 1).to(device)
 
-        features_rec = self.model_feature_rec(vae_feature_att, S_adj, vae_feature_att)
+            S_adj[S_adj < 0] = 0
+            S_adj[S_adj > 1] = 1
 
-        target_point = torch.stack(data['target_point'], dim=1).to(device, dtype=torch.float32)
-        pred_wp = model_nav(features_rec[:, nav_shijiao], target_point)
+            features_rec = self.model_feature_rec(vae_feature_att, S_adj, vae_feature_att)
 
+            L = feature_smoothing_batch(S_adj)
+            coeffient = torch.eye(24).unsqueeze(0).repeat(self.batch, 1, 1).to(device) + 2.5 * L
+            coeffient = torch.linalg.inv(coeffient)
+            features_rec_step2 = torch.bmm(coeffient, features_rec)
 
+            target_point = torch.stack(data['target_point'], dim=1).to(device, dtype=torch.float32)
+            pred_wp = model_nav(features_rec_step2[:, nav_shijiao], target_point)
 
-        return features_rec, pred_wp
+            return features_rec, pred_wp
+
+        if self.train_mdoel==1:
+            imgs_clean_batch = torch.stack(data['imgs_clean'], dim=0)  # 24 * 12 * 3 * 128 *128
+            self.imgs_clean_batch = imgs_clean_batch.view(-1, 3 * 128 * 128).to(device)
+            lidars_clean_batch = torch.stack(data['lidars_clean'], dim=0)  # 24 * 12 * 3 * 128 *128
+            self.lidars_clean_batch = lidars_clean_batch.view(-1, 64 * 122).to(device)
+            vae_feature_label, self.dec_clean_imgs, self.dec_clean_lidars = self.model_vae_fixed_parameters(self.imgs_clean_batch, self.lidars_clean_batch)
+            self.ll_clean = latent_loss(self.model_vae_fixed_parameters.z_mean, self.model_vae_fixed_parameters.z_sigma)
+            self.vae_feature_label = vae_feature_label.view(24, -1, 256).permute(1, 0, 2)
+
+            imgs_att_batch = torch.stack(data['imgs_att'], dim=0)  # 24 * 12 * 3 * 128 *128
+            imgs_att_batch = imgs_att_batch.view(-1, 3 * 128 * 128).to(device)
+            lidars_att_batch = torch.stack(data['lidars_att'], dim=0)  # 24 * 12 * 3 * 128 *128
+            lidars_att_batch = lidars_att_batch.view(-1, 64 * 122).to(device)
+
+            vae_feature_att, _, _ = self.model_vae(imgs_att_batch, lidars_att_batch)
+            vae_feature_att = vae_feature_att.view(24, -1, 256).permute(1, 0, 2)
+
+            self.batch = vae_feature_att.shape[0]
+
+            self.node_class, self.adj_rec = self.model_adj_rec(vae_feature_att, A)
+
+            return self.node_class, self.adj_rec
+
+        if self.train_mdoel==2:
+            imgs_clean_batch = torch.stack(data['imgs_clean'], dim=0)  # 24 * 12 * 3 * 128 *128
+            self.imgs_clean_batch = imgs_clean_batch.view(-1, 3 * 128 * 128).to(device)
+            lidars_clean_batch = torch.stack(data['lidars_clean'], dim=0)  # 24 * 12 * 3 * 128 *128
+            self.lidars_clean_batch = lidars_clean_batch.view(-1, 64 * 122).to(device)
+            vae_feature_label, self.dec_clean_imgs, self.dec_clean_lidars = self.model_vae_fixed_parameters(self.imgs_clean_batch, self.lidars_clean_batch)
+            self.ll_clean = latent_loss(self.model_vae_fixed_parameters.z_mean, self.model_vae_fixed_parameters.z_sigma)
+            self.vae_feature_label = vae_feature_label.view(24, -1, 256).permute(1, 0, 2)
+
+            imgs_att_batch = torch.stack(data['imgs_att'], dim=0)  # 24 * 12 * 3 * 128 *128
+            imgs_att_batch = imgs_att_batch.view(-1, 3 * 128 * 128).to(device)
+            lidars_att_batch = torch.stack(data['lidars_att'], dim=0)  # 24 * 12 * 3 * 128 *128
+            lidars_att_batch = lidars_att_batch.view(-1, 64 * 122).to(device)
+
+            vae_feature_att, _, _ = self.model_vae(imgs_att_batch, lidars_att_batch)
+            vae_feature_att = vae_feature_att.view(24, -1, 256).permute(1, 0, 2)
+
+            self.batch = vae_feature_att.shape[0]
+
+            self.node_class, self.adj_rec = self.model_adj_rec(vae_feature_att, A)
+
+            vae_feature_att0 = vae_feature_att.clone()
+
+            vae_feature_att0[:, 0:8, :] /= math.sqrt(3)
+            vae_feature_att0[:, 8:16, :] /= 2
+            vae_feature_att0[:, 16:24, :] /= math.sqrt(3)
+
+            vae_feature_att1 = vae_feature_att0.unsqueeze(2)
+            vae_feature_att2 = vae_feature_att0.unsqueeze(1)
+            vae_feature_att3 = vae_feature_att2 - vae_feature_att1
+            vae_feature_att4 = torch.norm(vae_feature_att3, p=2, dim=3)
+
+            S_adj_pro = self.adj_rec - vae_feature_att4 * 0.01 / 2
+            S_adj = prox_nuclear(S_adj_pro.detach(), 1).to(device)
+            b_s = S_adj.shape[0]
+            S_adj += torch.eye(24).unsqueeze(0).repeat(b_s, 1, 1).to(device)
+
+            S_adj[S_adj < 0] = 0
+            S_adj[S_adj > 1] = 1
+
+            features_rec = self.model_feature_rec(vae_feature_att, S_adj, vae_feature_att)
+
+            return features_rec
 

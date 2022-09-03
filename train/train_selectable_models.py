@@ -106,7 +106,7 @@ if __name__ == '__main__':
                 # class_labels = torch.stack([class_label for xxx in range(model_all.batch)], dim=0)
                 # loss_c = criterion(model_all.node_class[:, node_attack].float(), class_labels.float())
                 # A_labels = torch.stack([A_label for xxxx in range(model_all.batch)], dim=0)
-                # e_clean = torch.sum(torch.mul(model_all.adj_rec, A_labels)) / 21
+                # e_clean = torch.sum(torch.mul(model_all.adj_rec, A_labels)) / 20
                 # e_att = torch.sum(model_all.adj_rec[:, :, node_attack[0:4]]) / 4
                 # loss_e = torch.exp((- e_clean + e_att) / 24)
                 # loss_adj_rec = loss_c + loss_e
@@ -148,7 +148,7 @@ if __name__ == '__main__':
                 class_labels = torch.stack([class_label for xxx in range(model_all.batch)], dim=0)
                 loss_c = criterion(model_all.node_class[:, node_attack].float(), class_labels.float())
                 A_labels = torch.stack([A_label for xxxx in range(model_all.batch)], dim=0)
-                e_clean = torch.sum(torch.mul(model_all.adj_rec, A_labels)) / 21
+                e_clean = torch.sum(torch.mul(model_all.adj_rec, A_labels)) / 20
                 e_att = torch.sum(model_all.adj_rec[:, :, node_attack[0:4]]) / 4
                 loss_e = torch.exp((- e_clean + e_att) / 24)
                 loss_adj_rec = loss_c + loss_e
@@ -190,7 +190,7 @@ if __name__ == '__main__':
                 # class_labels = torch.stack([class_label for xxx in range(model_all.batch)], dim=0)
                 # loss_c = criterion(model_all.node_class[:, node_attack].float(), class_labels.float())
                 # A_labels = torch.stack([A_label for xxxx in range(model_all.batch)], dim=0)
-                # e_clean = torch.sum(torch.mul(model_all.adj_rec, A_labels)) / 21
+                # e_clean = torch.sum(torch.mul(model_all.adj_rec, A_labels)) / 20
                 # e_att = torch.sum(model_all.adj_rec[:, :, node_attack[0:4]]) / 4
                 # loss_e = torch.exp((- e_clean + e_att) / 24)
                 # loss_adj_rec = loss_c + loss_e

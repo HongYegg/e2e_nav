@@ -2,9 +2,9 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=windows,python,visualstudiocode
 
 ### Customization ###
-log/
+log*/
 Pre-trained_models/
-trained_models/
+trained_models*/
 local_files/
 dataset/
 

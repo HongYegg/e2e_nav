@@ -450,7 +450,7 @@ class model_all(nn.Module):
 
     def forward(self, data, A):
 
-        if self.train_mdoel==0:
+        if self.train_model==0:
             imgs_clean_batch = torch.stack(data['imgs_clean'], dim=0)  # 24 * 12 * 3 * 128 *128
             self.imgs_clean_batch = imgs_clean_batch.view(-1, 3 * 128 * 128).to(device)
             lidars_clean_batch = torch.stack(data['lidars_clean'], dim=0)  # 24 * 12 * 3 * 128 *128
@@ -502,7 +502,7 @@ class model_all(nn.Module):
 
             return features_rec, pred_wp
 
-        if self.train_mdoel==1:
+        if self.train_model==1:
             imgs_clean_batch = torch.stack(data['imgs_clean'], dim=0)  # 24 * 12 * 3 * 128 *128
             self.imgs_clean_batch = imgs_clean_batch.view(-1, 3 * 128 * 128).to(device)
             lidars_clean_batch = torch.stack(data['lidars_clean'], dim=0)  # 24 * 12 * 3 * 128 *128
@@ -525,7 +525,7 @@ class model_all(nn.Module):
 
             return self.node_class, self.adj_rec
 
-        if self.train_mdoel==2:
+        if self.train_model==2:
             imgs_clean_batch = torch.stack(data['imgs_clean'], dim=0)  # 24 * 12 * 3 * 128 *128
             self.imgs_clean_batch = imgs_clean_batch.view(-1, 3 * 128 * 128).to(device)
             lidars_clean_batch = torch.stack(data['lidars_clean'], dim=0)  # 24 * 12 * 3 * 128 *128

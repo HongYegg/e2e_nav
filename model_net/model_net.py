@@ -165,7 +165,7 @@ class ADJ_rec(nn.Module):
         q1 = F.relu(self.fcq(h))
         k1 = F.relu(self.fck(h)).permute(0, 2, 1)
         att1 = F.softmax(torch.mul(torch.bmm(q1, k1), adj) - 9e15 * (1 - adj), dim=2).to(torch.float32)
-        # att1 = F.sigmoid(torch.mul(torch.bmm(q1, k1), adj) - 9e15 * (1 - adj)).to(torch.float32)
+        # att1 = torch.sigmoid(torch.mul(torch.bmm(q1, k1), adj) - 9e15 * (1 - adj)).to(torch.float32)
         f1 = torch.bmm(att1, Wh1)
         f1 = self.fcout1(f1)
 
@@ -173,7 +173,7 @@ class ADJ_rec(nn.Module):
         q2 = F.relu(self.fcq2(f1))
         k2 = F.relu(self.fck2(f1)).permute(0, 2, 1)
         att2 = F.softmax(torch.mul(torch.bmm(q2, k2), adj) - 9e15 * (1 - adj), dim=2).to(torch.float32)
-        # att2 = F.sigmoid(torch.mul(torch.bmm(q2, k2), adj) - 9e15 * (1 - adj)).to(torch.float32)
+        # att2 = torch.sigmoid(torch.mul(torch.bmm(q2, k2), adj) - 9e15 * (1 - adj)).to(torch.float32)
         f2 = torch.bmm(att2, Wh2)
         f2 = self.fcout2(f2)
         out = F.softmax(self.finalMLP(f2), dim=2)

@@ -202,7 +202,7 @@ class CARLA_Data(Dataset):
         self.front_lh = []
 
         for sub_root in root_path:
-            preload_file = './local_files/dataset_0901.npy'
+            preload_file = './others/dataset_0901.npy'
             if True:
                 preload_front = []
                 preload_lidar = []

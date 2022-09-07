@@ -1,7 +1,4 @@
 #!/bin/bash
-if [ ! -d "/local_files/" ];then
-    mkdir local_files
-fi
 
 if [ ! -d "/log_model_0/" ];then
     mkdir log_model_0

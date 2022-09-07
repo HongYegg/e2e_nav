@@ -28,7 +28,10 @@ if __name__ == '__main__':
     loss_writer = './log/0901'
     writer = SummaryWriter(log_dir=loss_writer)
 
-    train_data = ['./dataset']
+    train_data = ['',
+                  '',
+                  '',
+                  '']
 
     train_data = CARLA_Data(root_path=train_data, batch_size=batchsize)
     dataloader_train = torch.utils.data.DataLoader(train_data, batch_size=batchsize, shuffle=True, num_workers=8)
@@ -54,11 +57,13 @@ if __name__ == '__main__':
 
     model_all = model_all().to(device)
 
-    model_all.model_vae_fixed_parameters.load_state_dict(torch.load('./Pre-trained_models/vae_459', map_location=device))
-    model_all.model_vae.load_state_dict(torch.load('./Pre-trained_models/vae_459', map_location=device))
-    model_all.model_adj_rec.load_state_dict(torch.load('./Pre-trained_models/gat_28.pth'))
-    model_all.model_feature_rec.load_state_dict(torch.load('./Pre-trained_models/rec_84.pth'))
-    model_all.model_nav.load_state_dict(torch.load('./Pre-trained_models/nav_20.pth'))
+    model_all.model_vae_fixed_parameters.load_state_dict(torch.load('./Pre-trained_models/', map_location=device))
+    model_all.model_vae.load_state_dict(torch.load('./Pre-trained_models/', map_location=device))
+    # model_all.model_adj_rec.load_state_dict(torch.load('./Pre-trained_models/'))
+    # model_all.model_feature_rec.load_state_dict(torch.load('./Pre-trained_models/'))
+    # model_all.model_nav.load_state_dict(torch.load('./Pre-trained_models/'))
+
+    model_all.load_state_dict(torch.load('./trained_models_/'))
 
     for p in model_all.model_vae_fixed_parameters.parameters():
         p.requires_grad = False

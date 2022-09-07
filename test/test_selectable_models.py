@@ -16,7 +16,7 @@ from PIL import Image
 from PIL import Image
 from torch.utils.tensorboard import SummaryWriter
 
-from data_load import CARLA_Data
+from train.data_load import CARLA_Data
 from model_net.model_net import model_all
 
 
@@ -29,7 +29,10 @@ if __name__ == '__main__':
     lr = 0.00001
     device = 'cuda:0'
 
-    train_data = ['./dataset']
+    train_data = ['',
+                  '',
+                  '',
+                  '']
 
     train_data = CARLA_Data(root_path=train_data, batch_size=batchsize)
     dataloader_train = torch.utils.data.DataLoader(train_data, batch_size=batchsize, shuffle=True, num_workers=8)

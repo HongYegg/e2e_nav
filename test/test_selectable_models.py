@@ -64,11 +64,11 @@ if __name__ == '__main__':
 
     step = 0
 
-    loss_model = []
+    loss_model = [[], [], []]
 
     for epoch in range(13):
         print('epoch: ', epoch)
-        loss_test = []
+        loss_test = [[], [], []]
         model_all.load_state_dict(torch.load(os.path.join('./trained_models_1', str(0 + epoch*5) + 'model.pth')))
 
         for i, data in enumerate(tqdm(dataloader_train), 0):
@@ -112,17 +112,11 @@ if __name__ == '__main__':
                 gt_waypoints = torch.stack(gt_waypoints, dim=1).to(device, dtype=torch.float32)
                 loss_nav = F.l1_loss(pred_wp, gt_waypoints, reduction='none').mean()
 
-
-
                 # model all loss
                 # loss = loss_vae + loss_adj_rec + loss_feature_rec
-                loss = loss_nav
-                # print('loss_vae: ', loss_vae)
-                # print('loss_adj_rec: ', loss_adj_rec)
-                # print('loss_feature_rec: ', loss_feature_rec)
-                print('loss: ', loss)
 
-                loss_test.append(loss.data)
+                loss = loss_nav
+                loss_test[0].append(loss.data)
 
 
             if train_model==1:
@@ -153,13 +147,12 @@ if __name__ == '__main__':
 
                 # model all loss
                 # loss = loss_vae + loss_adj_rec + loss_feature_rec
-                loss = loss_adj_rec
-                # print('loss_vae: ', loss_vae)
-                # print('loss_adj_rec: ', loss_adj_rec)
-                # print('loss_feature_rec: ', loss_feature_rec)
-                print('loss: ', loss)
 
-                loss_test.append(loss.data)
+                loss = loss_adj_rec
+
+                loss_test[0].append(loss.data)
+                loss_test[1].append(loss_c.data)
+                loss_test[2].append(loss_e.data)
 
 
             if train_model==2:
@@ -190,15 +183,16 @@ if __name__ == '__main__':
 
                 # model all loss
                 # loss = loss_vae + loss_adj_rec + loss_feature_rec
+
                 loss = loss_feature_rec
-                # print('loss_vae: ', loss_vae)
-                # print('loss_adj_rec: ', loss_adj_rec)
-                # print('loss_feature_rec: ', loss_feature_rec)
-                print('loss: ', loss)
 
-                loss_test.append(loss.data)
+                loss_test[0].append(loss.data)
 
 
-        loss_model.append(torch.mean(torch.tensor(loss_test)))
-        print('loss_model: ', loss_model)
+        loss_model[0].append(torch.mean(torch.tensor(loss_test[0])))
+        print('loss_model: ', loss_model[0])
+        loss_model[1].append(torch.mean(torch.tensor(loss_test[1])))
+        print('loss_c: ', loss_model[1])
+        loss_model[2].append(torch.mean(torch.tensor(loss_test[2])))
+        print('loss_e: ', loss_model[2])
 

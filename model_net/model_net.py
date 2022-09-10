@@ -164,16 +164,16 @@ class ADJ_rec(nn.Module):
         Wh1 = F.relu(self.fcv(h))
         q1 = F.relu(self.fcq(h))
         k1 = F.relu(self.fck(h)).permute(0, 2, 1)
-        att1 = F.softmax(torch.mul(torch.bmm(q1, k1), adj) - 9e15 * (1 - adj), dim=2).to(torch.float32)
-        # att1 = torch.sigmoid(torch.mul(torch.bmm(q1, k1), adj) - 9e15 * (1 - adj)).to(torch.float32)
+        # att1 = F.softmax(torch.mul(torch.bmm(q1, k1), adj) - 9e15 * (1 - adj), dim=2).to(torch.float32)
+        att1 = torch.sigmoid(torch.mul(torch.bmm(q1, k1), adj) - 9e15 * (1 - adj)).to(torch.float32)
         f1 = torch.bmm(att1, Wh1)
         f1 = self.fcout1(f1)
 
         Wh2 = F.relu(self.fcv2(f1))
         q2 = F.relu(self.fcq2(f1))
         k2 = F.relu(self.fck2(f1)).permute(0, 2, 1)
-        att2 = F.softmax(torch.mul(torch.bmm(q2, k2), adj) - 9e15 * (1 - adj), dim=2).to(torch.float32)
-        # att2 = torch.sigmoid(torch.mul(torch.bmm(q2, k2), adj) - 9e15 * (1 - adj)).to(torch.float32)
+        # att2 = F.softmax(torch.mul(torch.bmm(q2, k2), adj) - 9e15 * (1 - adj), dim=2).to(torch.float32)
+        att2 = torch.sigmoid(torch.mul(torch.bmm(q2, k2), adj) - 9e15 * (1 - adj)).to(torch.float32)
         f2 = torch.bmm(att2, Wh2)
         f2 = self.fcout2(f2)
         out = F.softmax(self.finalMLP(f2), dim=2)
@@ -220,8 +220,7 @@ class FEATURE_rec(nn.Module):
         Wh2 = F.relu(self.fcv2(f1))
         q2 = F.relu(self.fcq2(f1))
         k2 = F.relu(self.fck2(f1)).permute(0, 2, 1)
-        # att2 = F.softmax(torch.mul(torch.bmm(q2, k2), adj) - 9e15 * (1 - adj), dim=2).to(torch.float32)
-        att2 = torch.sigmoid(torch.mul(torch.bmm(q2, k2), adj) - 9e15 * (1 - adj)).to(torch.float32)
+        att2 = F.softmax(torch.mul(torch.bmm(q2, k2), adj) - 9e15 * (1 - adj), dim=2).to(torch.float32)
         f2 = torch.bmm(att2, Wh2)
         f2 = self.fcout2(f2)
         f3 = torch.cat([f2, vae2_fetures], 2)
@@ -308,10 +307,10 @@ class VaeNav(nn.Module):
                                nn.ReLU(inplace=True),
                                ).to(self.device)
 
-        self.decoder = nn.GRUCell(input_size=4, hidden_size=64).to(self.device)
+        self.decoder = nn.GRUCell(input_size=5, hidden_size=64).to(self.device)
         self.output = nn.Linear(64, 2).to(self.device)
 
-    def forward(self, feature_emb, target_point):
+    def forward(self, feature_emb, target_point, red_light):
         '''
         Predicts future waypoints from image features and target point (goal location)
         Args:
@@ -343,8 +342,10 @@ class VaeNav(nn.Module):
         x = torch.zeros(size=(z.shape[0], 2), dtype=z.dtype).to(self.device)
 
         # autoregressive generation of output waypoints
+        red_light = red_light.unsqueeze(1)
         for _ in range(self.config.pred_len):
             x_in = torch.cat([x, target_point], dim=1)
+            x_in = torch.cat([x, red_light], dim=1)
             z = self.decoder(x_in, z)
             dx = self.output(z)
             x = dx + x
@@ -426,6 +427,7 @@ encoder1 = Encoder1(64*122, 512, 256)
 decoder1 = Decoder1(256, 512, 64*122)
 vae = VAE(encoder, decoder, encoder1, decoder1)
 vae_fixed_parameters = VAE(encoder, decoder, encoder1, decoder1)
+vae_fixed_parameters.load_state_dict(torch.load('./Pre-trained_models/', map_location=device))
 
 adj_rec = ADJ_rec(in_features=256, mid_features1=512, hidden=256, mid_feature2=32,
                   out_features=2, dropout=0, alpha=0.2, concat=False)
@@ -442,7 +444,7 @@ class model_all(nn.Module):
     def __init__(self, train_model = 0): # 0:all; 1:model_adj_rec; 2:model_feature_rec;
         super(model_all, self).__init__()
         self.train_model = train_model
-        self.model_vae_fixed_parameters = vae_fixed_parameters
+        # self.model_vae_fixed_parameters = vae_fixed_parameters
         self.model_vae = vae
         self.model_adj_rec = adj_rec
         self.model_feature_rec = feature_rec
@@ -455,8 +457,8 @@ class model_all(nn.Module):
             self.imgs_clean_batch = imgs_clean_batch.view(-1, 3 * 128 * 128).to(device)
             lidars_clean_batch = torch.stack(data['lidars_clean'], dim=0)  # 24 * 12 * 3 * 128 *128
             self.lidars_clean_batch = lidars_clean_batch.view(-1, 64 * 122).to(device)
-            vae_feature_label, self.dec_clean_imgs, self.dec_clean_lidars = self.model_vae_fixed_parameters(self.imgs_clean_batch, self.lidars_clean_batch)
-            self.ll_clean = latent_loss(self.model_vae_fixed_parameters.z_mean, self.model_vae_fixed_parameters.z_sigma)
+            vae_feature_label, self.dec_clean_imgs, self.dec_clean_lidars = vae_fixed_parameters(self.imgs_clean_batch, self.lidars_clean_batch)
+            self.ll_clean = latent_loss(vae_fixed_parameters.z_mean, vae_fixed_parameters.z_sigma)
             self.vae_feature_label = vae_feature_label.view(24, -1, 256).permute(1, 0, 2)
 
             imgs_att_batch = torch.stack(data['imgs_att'], dim=0)  # 24 * 12 * 3 * 128 *128
@@ -498,18 +500,19 @@ class model_all(nn.Module):
             features_rec_step2 = torch.bmm(coeffient, features_rec)
 
             target_point = torch.stack(data['target_point'], dim=1).to(device, dtype=torch.float32)
-            pred_wp = model_nav(features_rec_step2[:, nav_shijiao], target_point)
+            red_light = data['red_light'][0][0].to(device, dtype=torch.float32)
+            pred_wp = model_nav(features_rec_step2[:, nav_shijiao], target_point, red_light)
 
             return features_rec, pred_wp
 
         if self.train_model==1:
-            imgs_clean_batch = torch.stack(data['imgs_clean'], dim=0)  # 24 * 12 * 3 * 128 *128
-            self.imgs_clean_batch = imgs_clean_batch.view(-1, 3 * 128 * 128).to(device)
-            lidars_clean_batch = torch.stack(data['lidars_clean'], dim=0)  # 24 * 12 * 3 * 128 *128
-            self.lidars_clean_batch = lidars_clean_batch.view(-1, 64 * 122).to(device)
-            vae_feature_label, self.dec_clean_imgs, self.dec_clean_lidars = self.model_vae_fixed_parameters(self.imgs_clean_batch, self.lidars_clean_batch)
-            self.ll_clean = latent_loss(self.model_vae_fixed_parameters.z_mean, self.model_vae_fixed_parameters.z_sigma)
-            self.vae_feature_label = vae_feature_label.view(24, -1, 256).permute(1, 0, 2)
+            # imgs_clean_batch = torch.stack(data['imgs_clean'], dim=0)  # 24 * 12 * 3 * 128 *128
+            # self.imgs_clean_batch = imgs_clean_batch.view(-1, 3 * 128 * 128).to(device)
+            # lidars_clean_batch = torch.stack(data['lidars_clean'], dim=0)  # 24 * 12 * 3 * 128 *128
+            # self.lidars_clean_batch = lidars_clean_batch.view(-1, 64 * 122).to(device)
+            # vae_feature_label, self.dec_clean_imgs, self.dec_clean_lidars = self.model_vae_fixed_parameters(self.imgs_clean_batch, self.lidars_clean_batch)
+            # self.ll_clean = latent_loss(self.model_vae_fixed_parameters.z_mean, self.model_vae_fixed_parameters.z_sigma)
+            # self.vae_feature_label = vae_feature_label.view(24, -1, 256).permute(1, 0, 2)
 
             imgs_att_batch = torch.stack(data['imgs_att'], dim=0)  # 24 * 12 * 3 * 128 *128
             imgs_att_batch = imgs_att_batch.view(-1, 3 * 128 * 128).to(device)
@@ -530,8 +533,8 @@ class model_all(nn.Module):
             self.imgs_clean_batch = imgs_clean_batch.view(-1, 3 * 128 * 128).to(device)
             lidars_clean_batch = torch.stack(data['lidars_clean'], dim=0)  # 24 * 12 * 3 * 128 *128
             self.lidars_clean_batch = lidars_clean_batch.view(-1, 64 * 122).to(device)
-            vae_feature_label, self.dec_clean_imgs, self.dec_clean_lidars = self.model_vae_fixed_parameters(self.imgs_clean_batch, self.lidars_clean_batch)
-            self.ll_clean = latent_loss(self.model_vae_fixed_parameters.z_mean, self.model_vae_fixed_parameters.z_sigma)
+            vae_feature_label, self.dec_clean_imgs, self.dec_clean_lidars = vae_fixed_parameters(self.imgs_clean_batch, self.lidars_clean_batch)
+            self.ll_clean = latent_loss(vae_fixed_parameters.z_mean, vae_fixed_parameters.z_sigma)
             self.vae_feature_label = vae_feature_label.view(24, -1, 256).permute(1, 0, 2)
 
             imgs_att_batch = torch.stack(data['imgs_att'], dim=0)  # 24 * 12 * 3 * 128 *128

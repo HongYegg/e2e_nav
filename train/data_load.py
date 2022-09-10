@@ -201,6 +201,8 @@ class CARLA_Data(Dataset):
         self.front_rh = []
         self.front_lh = []
 
+        self.red_light = []
+
         for sub_root in root_path:
             preload_file = './others/dataset_0901.npy'
             if True:
@@ -227,6 +229,8 @@ class CARLA_Data(Dataset):
                 preload_lidar_rh = []
                 preload_front_lh = []
                 preload_lidar_lh = []
+
+                preload_red_light = []
 
                 root_files = os.listdir(sub_root)
 
@@ -260,6 +264,8 @@ class CARLA_Data(Dataset):
                         lidars_rh = []
                         fronts_lh = []
                         lidars_lh = []
+
+                        red_light = []
 
                         # read files sequentially (past and current frames)
                         for i in range(self.seq_len):
@@ -318,6 +324,7 @@ class CARLA_Data(Dataset):
                             xs.append(data['x'])
                             ys.append(data['y'])
                             thetas.append(data['theta'])
+                            red_light.append(data['is_red_light_present'])
 
 
                         preload_x_command.append(data['x_command'])
@@ -358,6 +365,9 @@ class CARLA_Data(Dataset):
                         preload_lidar_rh.append(lidars_rh)
                         preload_front_lh.append(fronts_lh)
                         preload_lidar_lh.append(lidars_lh)
+
+                        preload_red_light.append(red_light)
+
                         # print('\n')
 
                 # dump to npy
@@ -386,6 +396,9 @@ class CARLA_Data(Dataset):
                 preload_dict['lidar_rh'] = preload_lidar_rh
                 preload_dict['front_lh'] = preload_front_lh
                 preload_dict['lidar_lh'] = preload_lidar_lh
+
+                preload_dict['red_light'] = preload_red_light
+
                 np.save(preload_file, preload_dict)
 
             # load from npy if available
@@ -414,6 +427,8 @@ class CARLA_Data(Dataset):
             self.lidar_rh += preload_dict.item()['lidar_rh']
             self.front_lh += preload_dict.item()['front_lh']
             self.lidar_lh += preload_dict.item()['lidar_lh']
+
+            self.red_light += preload_dict.item()['red_light']
 
             print("Preloading " + str(len(preload_dict.item()['front'])) + " sequences from " + preload_file)
 
@@ -645,6 +660,10 @@ class CARLA_Data(Dataset):
                 data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att
 
         data_new['att_nodes'] = self.choice_nodes
+
+        data_new['red_light'] = []
+        red_light = self.red_light[index]
+        data_new['red_light'].append(red_light)
 
         # target_point and waypoints
         seq_x = self.x[index]

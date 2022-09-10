@@ -61,7 +61,6 @@ if __name__ == '__main__':
 
     model_all = model_all(train_model=train_model).to(device)
 
-    model_all.model_vae_fixed_parameters.load_state_dict(torch.load('./Pre-trained_models/', map_location=device))
     model_all.model_vae.load_state_dict(torch.load('./Pre-trained_models/', map_location=device))
     # model_all.model_adj_rec.load_state_dict(torch.load('./Pre-trained_models/'))
     # model_all.model_feature_rec.load_state_dict(torch.load('./Pre-trained_models/'))
@@ -69,10 +68,11 @@ if __name__ == '__main__':
 
     model_all.load_state_dict(torch.load('./trained_models_/'))
 
-    for p in model_all.model_vae_fixed_parameters.parameters():
-        p.requires_grad = False
+    # for p in model_all.model_vae_fixed_parameters.parameters():
+    #     p.requires_grad = False
 
-    optimizer = optim.Adam(filter(lambda p: p.requires_grad, model_all.parameters()), lr=lr)
+    # optimizer = optim.Adam(filter(lambda p: p.requires_grad, model_all.parameters()), lr=lr)
+    optimizer = optim.Adam(model_all.parameters(), lr=lr)
     model_all.train()
 
     # criterion_vae = torch.nn.MSELoss(reduction='sum')
@@ -81,7 +81,6 @@ if __name__ == '__main__':
     step = 0
 
     for epoch in range(100):
-        print('epoch: ', epoch)
         for i, data in enumerate(tqdm(dataloader_train), 0):
             step = step + 1
 
@@ -133,7 +132,7 @@ if __name__ == '__main__':
                 # print('loss_vae: ', loss_vae)
                 # print('loss_adj_rec: ', loss_adj_rec)
                 # print('loss_feature_rec: ', loss_feature_rec)
-                print('loss: ', loss)
+                print('epoch: ', epoch, 'loss: ', loss)
 
                 writer.add_scalar('train_model_0/loss', loss, step)
                 # writer.add_scalar('train_model_0/loss_vae', loss_vae, step)
@@ -171,16 +170,13 @@ if __name__ == '__main__':
 
                 # model all loss
                 # loss = loss_vae + loss_adj_rec + loss_feature_rec
+
                 loss = loss_adj_rec
-                # print('loss_vae: ', loss_vae)
-                # print('loss_adj_rec: ', loss_adj_rec)
-                # print('loss_feature_rec: ', loss_feature_rec)
-                print('loss: ', loss)
+                print('epoch: ', epoch, 'loss: ', loss, 'loss_c: ', loss_c, 'loss_e: ', loss_e)
 
                 writer.add_scalar('train_model_1/loss', loss, step)
-                # writer.add_scalar('train_model_0/loss_vae', loss_vae, step)
-                # writer.add_scalar('train_model_0/loss_adj_rec', loss_adj_rec, step)
-                # writer.add_scalar('train_model_0/loss_feature_rec', loss_feature_rec, step)
+                writer.add_scalar('train_model_1/loss_c', loss_c, step)
+                writer.add_scalar('train_model_1/loss_e', loss_e, step)
 
                 loss.backward()
                 optimizer.step()
@@ -213,22 +209,18 @@ if __name__ == '__main__':
 
                 # model all loss
                 # loss = loss_vae + loss_adj_rec + loss_feature_rec
+
                 loss = loss_feature_rec
-                # print('loss_vae: ', loss_vae)
-                # print('loss_adj_rec: ', loss_adj_rec)
-                # print('loss_feature_rec: ', loss_feature_rec)
-                print('loss: ', loss)
+                print('epoch: ', epoch, 'loss: ', loss)
 
                 writer.add_scalar('train_model_2/loss', loss, step)
-                # writer.add_scalar('train_model_2/loss_vae', loss_vae, step)
-                # writer.add_scalar('train_model_2/loss_adj_rec', loss_adj_rec, step)
-                # writer.add_scalar('train_model_2/loss_feature_rec', loss_feature_rec, step)
 
                 loss.backward()
                 optimizer.step()
 
+        torch.save(model_all.state_dict(), os.path.join('./trained_models_'+str(train_model), 'current_model.pth'))
         if epoch % 5 == 0:
-            torch.save(model_all.state_dict(), os.path.join('./trained_models_'+str(train_model), str(epoch) + 'model.pth'))
+            torch.save(model_all.state_dict(), os.path.join('./trained_models_'+str(train_model), str(0+epoch) + 'model.pth'))
 
     writer.close()
 

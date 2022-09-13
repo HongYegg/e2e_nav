@@ -345,7 +345,7 @@ class VaeNav(nn.Module):
         red_light = red_light.unsqueeze(1)
         for _ in range(self.config.pred_len):
             x_in = torch.cat([x, target_point], dim=1)
-            x_in = torch.cat([x, red_light], dim=1)
+            x_in = torch.cat([x_in, red_light], dim=1)
             z = self.decoder(x_in, z)
             dx = self.output(z)
             x = dx + x
@@ -501,7 +501,7 @@ class model_all(nn.Module):
 
             target_point = torch.stack(data['target_point'], dim=1).to(device, dtype=torch.float32)
             red_light = data['red_light'][0][0].to(device, dtype=torch.float32)
-            pred_wp = model_nav(features_rec_step2[:, nav_shijiao], target_point, red_light)
+            pred_wp = self.model_nav(features_rec_step2[:, nav_shijiao], target_point, red_light)
 
             return features_rec, pred_wp
 

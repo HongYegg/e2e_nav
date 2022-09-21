@@ -166,6 +166,7 @@ class CARLA_Data(Dataset):
         self.batch_size = batch_size
         # self.choice_nodes = random.sample(range(0, 24), 6)
         # self.rand()
+        self.fan_mat=Sector(47.2,5)
 
         self.seq_len = 1
         self.pred_len = 4
@@ -561,7 +562,10 @@ class CARLA_Data(Dataset):
         for att_node in att_nodes:
             att_t = att_node // 8
             att_shijiao = att_node % 8
-            att_type = np.random.randint(1, 7)  # 1:Shelter; 2:noise; 3:Information all black; 4:Brightness and contrast; 5:Frame overlap; 6:Semantic attacks
+            # 1:Shelter; 2:noise; 3:Information all black(Loss of frames); 4:Brightness and contrast; 5:Frame overlap; 6:Semantic attacks
+            # 7:Repeat frame; 8:Fan lost(5 degree); 9:Multi-sensor desynchronization (homogeneous desynchronization); 
+            # 10:Multi-sensor desynchronization (heterogeneous desynchronization)
+            att_type = np.random.randint(1, 7)
             # att_type = 1
             if att_type == 1:
                 img_att_zhedang = data_new['imgs_att'][att_t*8 + att_shijiao]
@@ -633,7 +637,6 @@ class CARLA_Data(Dataset):
                     lidar_att_zhedang_t1 = data_new['lidars_att'][(att_t+1) * 8 + att_shijiao]
                     lidar_att_zhedang_t0 = (lidar_att_zhedang_t0 + lidar_att_zhedang_t1)/2
                     data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang_t0
-
                 else:
                     # att img
                     img_att_zhedang_t = data_new['imgs_att'][att_t*8 + att_shijiao]
@@ -658,6 +661,42 @@ class CARLA_Data(Dataset):
                 lidar_att = data_new['lidars_att'][att_t * 8 + att_shijiao]
                 lidar_att = attack.att_lidar_semantic(lidar_att, 8, 3)
                 data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att
+
+
+            if att_type == 7:
+                if att_t==0:
+                    # att img
+                    img_att_zhedang_t0 = data_new['imgs_att'][att_t*8 + att_shijiao]
+                    data_new['imgs_att'][(att_t+1)*8 + att_shijiao] = img_att_zhedang_t0
+
+                    # att lidar
+                    lidar_att_zhedang_t0 = data_new['lidars_att'][att_t * 8 + att_shijiao]
+                    data_new['lidars_att'][(att_t+1)*8 + att_shijiao] = lidar_att_zhedang_t0
+                else:
+                    # att img
+                    img_att_zhedang_t_1 = data_new['imgs_att'][(att_t-1)*8 + att_shijiao]
+                    data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att_zhedang_t_1
+
+                    # att lidar
+                    lidar_att_zhedang_t_1 = data_new['lidars_att'][(att_t-1) * 8 + att_shijiao]
+                    data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang_t_1
+
+            if att_type == 8:
+                # att img
+                img_att_zhedang = data_new['imgs_att'][att_t*8 + att_shijiao]
+                img_att_zhedang = torch.tensor(self.fan_mat).unsqueeze(0).repeat(3, 1, 1)*img_att_zhedang
+                data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att_zhedang
+
+                # att lidar
+                lidar_att_zhedang = data_new['lidars_att'][att_t * 8 + att_shijiao]
+                lidar_att_zhedang = torch.tensor(self.fan_mat).unsqueeze(0).repeat(3, 1, 1)*lidar_att_zhedang
+                data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang
+
+
+
+
+
+
 
         data_new['att_nodes'] = self.choice_nodes
 
@@ -794,4 +833,112 @@ def sp_noise(img, prob):
 def bright_contrast(a, b, img):
     img_out = torch.clip((a * img + b), 0, 1)
     return img_out
+
+def sectoring(angle ,angle2, mat):
+    # an intermediate function to calculate angle != 90 and 270
+    ans=mat
+    start_a=angle/180*math.pi
+    tan_s=math.tan(start_a)
+    end_a=(angle2)/180*math.pi
+    tan_e=math.tan(end_a)
+    flag=1  # flag=0 means I&IV ; 1 means II & III; 2 means across
+    ######################################
+    #Specicial Cases:
+    #########################################
+    if(angle==90):
+        #print(tan_s)
+        for j in range(64,128):
+            start=0
+            end_a=(angle2-90)/180*math.pi
+            tan_e=math.tan(end_a)
+            end=int((j-64)*tan_e) 
+            for i in range(64,64+end):
+                ans[i][j]=0
+    if(angle2==90):
+        for j in range(64,128):
+            start=0
+            end_a=(90-angle)/180*math.pi
+            tan_e=math.tan(end_a)
+            end=int((j-64)*tan_e) 
+            for i in range(64-end,64):
+                ans[i][j]=0
+    if(angle==270):
+        for j in range(0,64):
+            start=0
+            end_a=(angle2-270)/180*math.pi
+            tan_e=math.tan(end_a)
+            end=int((64-j)*tan_e) 
+            for i in range(64-end,64):
+                ans[i][j]=0
+    if(angle2==270):
+        for j in range(0,64):
+            start=0
+            end_a=(270-angle)/180*math.pi
+            tan_e=math.tan(end_a)
+            end=int((64-j)*tan_e) 
+            for i in range(64,64+end):
+                ans[i][j]=0
+    ##############################################
+    # Normal cases
+    # ##########################################    
+    if (angle2) <90 or angle>270 :
+        flag=0
+    if (angle2)< 270 and angle >90:
+        flag=1
+    if flag ==0:
+        for i in range(0,64):
+            
+            start=int(64+(64-i)*tan_s) 
+            end=int(64+(64-i)*tan_e) 
+            if start>=end: 
+                break
+            if start>128 :
+                start=127
+            if end>128:
+                end=127
+            if start<0: 
+                start=0
+            if end<0 : 
+                end=0
+            for j in range(start -1,end):
+                ans[i][j]=0
+    if flag==1: 
+        for i in range(64,128):
+            
+            start=int(64+(64-i)*tan_s) 
+            end=int(64+(64-i)*tan_e) 
+            if start>128:
+               start=127
+            if end>128:
+                end=127
+            if start<0: 
+                start=0
+            if end<0 : 
+                end=0
+            for j in range(end ,start):
+                ans[i][j]=0
+    
+    return ans
+
+def Sector(angle, theta=5):
+    # function to get a mask that fans the figure
+    if angle > 360 or angle <0:
+        print("Choose a right angle")
+        return
+    mat=np.ones((128,128))
+    #flag=1  # flag=0 means I&IV ; 1 means II & III; 2 means across
+    if (angle+theta) <90 or angle>=270 :
+        return sectoring(angle,angle+theta, mat)
+       
+    if (angle+ theta)< 270 and angle >=90:
+        return sectoring(angle,angle+theta,mat)
+    
+    if angle<90 :
+        ans=sectoring(angle, 90, mat)
+        ans=sectoring(90,angle+theta,ans)
+        return ans
+    if angle >90 and angle<270 : 
+        ans=sectoring(angle, 270, mat)
+        ans=sectoring(270,angle+theta,ans)
+        return ans
 

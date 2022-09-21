@@ -572,3 +572,49 @@ class model_all(nn.Module):
 
             return features_rec
 
+        if self.train_model==3:
+            imgs_att_batch = torch.stack(data['imgs_clean'], dim=0)  # 24 * 12 * 3 * 128 *128
+            imgs_att_batch = imgs_att_batch.view(-1, 3 * 128 * 128).to(device)
+            lidars_att_batch = torch.stack(data['lidars_clean'], dim=0)  # 24 * 12 * 3 * 64 *122
+            lidars_att_batch = lidars_att_batch.view(-1, 64 * 122).to(device)
+
+            vae_feature_att, _, _ = self.model_vae(imgs_att_batch, lidars_att_batch)
+            vae_feature_att = vae_feature_att.view(24, -1, 256).permute(1, 0, 2)
+
+            self.batch = vae_feature_att.shape[0]
+
+            self.node_class, self.adj_rec = self.model_adj_rec(vae_feature_att, A)
+
+            vae_feature_att0 = vae_feature_att.clone()
+
+            vae_feature_att0[:, 0:8, :] /= math.sqrt(3)
+            vae_feature_att0[:, 8:16, :] /= 2
+            vae_feature_att0[:, 16:24, :] /= math.sqrt(3)
+
+            vae_feature_att1 = vae_feature_att0.unsqueeze(2)
+            vae_feature_att2 = vae_feature_att0.unsqueeze(1)
+            vae_feature_att3 = vae_feature_att2 - vae_feature_att1
+            vae_feature_att4 = torch.norm(vae_feature_att3, p=2, dim=3)
+
+            S_adj_pro = self.adj_rec - vae_feature_att4 * 0.01 / 2
+            S_adj = prox_nuclear(S_adj_pro.detach(), 1).to(device)
+            b_s = S_adj.shape[0]
+            S_adj += torch.eye(24).unsqueeze(0).repeat(b_s, 1, 1).to(device)
+
+            S_adj[S_adj < 0] = 0
+            S_adj[S_adj > 1] = 1
+
+            features_rec = self.model_feature_rec(vae_feature_att, S_adj, vae_feature_att)
+
+            L = feature_smoothing_batch(S_adj)
+            coeffient = torch.eye(24).unsqueeze(0).repeat(self.batch, 1, 1).to(device) + 2.5 * L
+            coeffient = torch.linalg.inv(coeffient)
+            features_rec_step2 = torch.bmm(coeffient, features_rec)
+
+            target_point = torch.stack(data['target_point'], dim=1).to(device, dtype=torch.float32)
+            # red_light = data['red_light'][0][0].to(device, dtype=torch.float32)
+            red_light = torch.randn(24, 1).to(device, dtype=torch.float32)
+            pred_wp = self.model_nav(features_rec_step2[:, nav_shijiao], target_point, red_light)
+
+            return pred_wp
+

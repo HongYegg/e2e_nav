@@ -378,7 +378,7 @@ class EightAngleAgent(autonomous_agent.AutonomousAgent):
         self.A = torch.tensor(self.A).to('cuda')
 
         self.model_all = model_all(train_model=3).to(device)
-        model_all.load_state_dict(torch.load('./trained_models_/'))
+        self.model_all.load_state_dict(torch.load('./trained_models_/', map_location=device), strict=False)
 
         self.transform_img = transforms.Compose([transforms.Resize([128, 128]),
                                             transforms.ToTensor(),
@@ -683,8 +683,8 @@ class EightAngleAgent(autonomous_agent.AutonomousAgent):
                 img_att_zhedang = data_new['imgs_clean'][att_t*8 + att_shijiao]
                 img_att_zhedang[:, 32:, 32:96] = 0
 
-                # img_att_zhedang = img_att_zhedang.cpu().numpy().transpose(1, 2, 0)
-                # cv2.imshow('img_orl', img_att_zhedang)
+                # img_att_show = img_att_zhedang.cpu().numpy().transpose(1, 2, 0)
+                # cv2.imshow('img_att_show', img_att_show)
 
                 data_new['imgs_clean'][att_t * 8 + att_shijiao] = img_att_zhedang
 
@@ -692,8 +692,8 @@ class EightAngleAgent(autonomous_agent.AutonomousAgent):
                 lidar_att_zhedang = data_new['lidars_clean'][att_t * 8 + att_shijiao]
                 lidar_att_zhedang[:, 16:, 30:90] = 0
 
-                # img_att_zhedang = lidar_att_zhedang.cpu().numpy().transpose(1, 2, 0)
-                # cv2.imshow('lidar_orl', img_att_zhedang)
+                # lidar_att_show = lidar_att_zhedang.cpu().numpy().transpose(1, 2, 0)
+                # cv2.imshow('lidar_att_show', lidar_att_show)
                 # cv2.waitKey(10)
                 # time.sleep(6)
 
@@ -810,7 +810,7 @@ class EightAngleAgent(autonomous_agent.AutonomousAgent):
                                      torch.FloatTensor([tick_data_now['target_point'][1]])]
         data_new['target_point'] = tick_data_now['target_point']
 
-        _, pred_wp = model_all(data_new, self.A)
+        pred_wp = self.model_all(data_new, self.A)
 
         steer_, throttle_, brake_, metadata_ = self.model_all.model_nav.control_pid(pred_wp, gt_velocity)
 

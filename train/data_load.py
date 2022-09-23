@@ -571,8 +571,8 @@ class CARLA_Data(Dataset):
                 img_att_zhedang = data_new['imgs_att'][att_t*8 + att_shijiao]
                 img_att_zhedang[:, 32:, 32:96] = 0
 
-                # img_att_zhedang = img_att_zhedang.cpu().numpy().transpose(1, 2, 0)
-                # cv2.imshow('img_orl', img_att_zhedang)
+                # img_att_show = img_att_zhedang.cpu().numpy().transpose(1, 2, 0)
+                # cv2.imshow('img_att_show', img_att_show)
 
                 data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att_zhedang
 
@@ -580,8 +580,8 @@ class CARLA_Data(Dataset):
                 lidar_att_zhedang = data_new['lidars_att'][att_t * 8 + att_shijiao]
                 lidar_att_zhedang[:, 16:, 30:90] = 0
 
-                # img_att_zhedang = lidar_att_zhedang.cpu().numpy().transpose(1, 2, 0)
-                # cv2.imshow('lidar_orl', img_att_zhedang)
+                # lidar_att_show = lidar_att_zhedang.cpu().numpy().transpose(1, 2, 0)
+                # cv2.imshow('lidar_att_show', lidar_att_show)
                 # cv2.waitKey(10)
                 # time.sleep(6)
 

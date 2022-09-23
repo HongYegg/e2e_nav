@@ -426,7 +426,7 @@ decoder = Decoder(256, 512, 128*128*3)
 encoder1 = Encoder1(64*122, 512, 256)
 decoder1 = Decoder1(256, 512, 64*122)
 vae = VAE(encoder, decoder, encoder1, decoder1)
-vae_fixed_parameters = VAE(encoder, decoder, encoder1, decoder1)
+vae_fixed_parameters = VAE(encoder, decoder, encoder1, decoder1).to(device)
 vae_fixed_parameters.load_state_dict(torch.load('./Pre-trained_models/', map_location=device))
 
 adj_rec = ADJ_rec(in_features=256, mid_features1=512, hidden=256, mid_feature2=32,
@@ -575,7 +575,7 @@ class model_all(nn.Module):
         if self.train_model==3:
             imgs_att_batch = torch.stack(data['imgs_clean'], dim=0)  # 24 * 12 * 3 * 128 *128
             imgs_att_batch = imgs_att_batch.view(-1, 3 * 128 * 128).to(device)
-            lidars_att_batch = torch.stack(data['lidars_clean'], dim=0)  # 24 * 12 * 3 * 64 *122
+            lidars_att_batch = torch.stack(data['lidars_clean'], dim=0).type(torch.float32) # 24 * 12 * 3 * 64 *122
             lidars_att_batch = lidars_att_batch.view(-1, 64 * 122).to(device)
 
             vae_feature_att, _, _ = self.model_vae(imgs_att_batch, lidars_att_batch)
@@ -613,7 +613,7 @@ class model_all(nn.Module):
 
             target_point = torch.stack(data['target_point'], dim=1).to(device, dtype=torch.float32)
             # red_light = data['red_light'][0][0].to(device, dtype=torch.float32)
-            red_light = torch.randn(24, 1).to(device, dtype=torch.float32)
+            red_light = torch.randn(1).to(device, dtype=torch.float32)
             pred_wp = self.model_nav(features_rec_step2[:, nav_shijiao], target_point, red_light)
 
             return pred_wp

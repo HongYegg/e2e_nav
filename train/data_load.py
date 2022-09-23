@@ -692,12 +692,6 @@ class CARLA_Data(Dataset):
                 lidar_att_zhedang = torch.tensor(self.fan_mat).unsqueeze(0).repeat(3, 1, 1)*lidar_att_zhedang
                 data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang
 
-
-
-
-
-
-
         data_new['att_nodes'] = self.choice_nodes
 
         data_new['red_light'] = []
@@ -893,9 +887,9 @@ def sectoring(angle ,angle2, mat):
             if start>=end: 
                 break
             if start>128 :
-                start=127
+                start=128
             if end>128:
-                end=127
+                end=128
             if start<0: 
                 start=0
             if end<0 : 
@@ -908,9 +902,9 @@ def sectoring(angle ,angle2, mat):
             start=int(64+(64-i)*tan_s) 
             end=int(64+(64-i)*tan_e) 
             if start>128:
-               start=127
+               start=128
             if end>128:
-                end=127
+                end=128
             if start<0: 
                 start=0
             if end<0 : 

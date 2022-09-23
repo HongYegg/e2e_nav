@@ -242,9 +242,9 @@ def sectoring(angle ,angle2, mat):
             if start>=end: 
                 break
             if start>128 :
-                start=127
+                start=128
             if end>128:
-                end=127
+                end=128
             if start<0: 
                 start=0
             if end<0 : 
@@ -257,9 +257,9 @@ def sectoring(angle ,angle2, mat):
             start=int(64+(64-i)*tan_s) 
             end=int(64+(64-i)*tan_e) 
             if start>128:
-               start=127
+               start=128
             if end>128:
-                end=127
+                end=128
             if start<0: 
                 start=0
             if end<0 : 

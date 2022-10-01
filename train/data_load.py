@@ -1,4 +1,5 @@
 import os
+import copy
 import numpy as np
 import json
 import time
@@ -26,7 +27,7 @@ class ATTACK():
 
     def att_img_semantic(self, base_image, x, l_r):
         fore_image = cv2.resize(self.fore_image, (200, 209))
-        base_image = base_image.copy()
+        # base_image = base_image.copy()
         a = fore_image.shape
         resize = 2.628909478541378 / x + 2.3306802063092498 / (x * x) + 20.667384434972657 / (
                     x * x * x) - 0.03
@@ -567,70 +568,130 @@ class CARLA_Data(Dataset):
             # 10:Multi-sensor desynchronization (heterogeneous desynchronization)
             att_type = np.random.randint(1, 7)
             # att_type = 1
+
+            if att_type == 0:
+                img_att = data_new['imgs_att'][att_t*8 + att_shijiao]
+                lidar_att = data_new['lidars_att'][att_t * 8 + att_shijiao]
+                img_att_ori = data_new['imgs_clean_ori'][att_t * 8 + att_shijiao]
+
+
+                img_att1 = img_att.clone()
+                img_att1[:, 32:, 32:96] = 0
+                lidar_att1 = lidar_att.clone()
+                lidar_att1[:, 16:, 30:90] = 0
+
+                Attack_intensity = random.uniform(0.35, 0.45)
+                img_att2 = sp_noise(img_att, Attack_intensity)
+                lidar_att2 = sp_noise(lidar_att, Attack_intensity)
+
+                img_att3 = img_att.clone()
+                img_att3[:, :, :] = 0
+                lidar_att3 = lidar_att.clone()
+                lidar_att3[:, :, :] = 0
+
+                img_att4 = bright_contrast(1.5, 0.5, img_att)
+                lidar_att4 = bright_contrast(1.5, 0.5, lidar_att)
+
+                img_att_t_1 = data_new['imgs_att'][(att_t - 1) * 8 + att_shijiao]
+                img_att5 = (img_att + img_att_t_1) / 2
+                lidar_att_t_1 = data_new['lidars_att'][(att_t - 1) * 8 + att_shijiao]
+                lidar_att5 = (lidar_att + lidar_att_t_1) / 2
+
+                img_att6 = attack.att_img_semantic(img_att_ori, 8, 3)
+                img_att6 = transform_img(Image.fromarray(np.uint8(img_att_ori * 255)))
+                lidar_att6 = attack.att_lidar_semantic(lidar_att, 8, 3)
+
+                img_orl_show = img_att.cpu().numpy().transpose(1, 2, 0)
+                lidar_orl_show = lidar_att.cpu().numpy().transpose(1, 2, 0)
+                img_att1_show = img_att1.cpu().numpy().transpose(1, 2, 0)
+                lidar_att1_show = lidar_att1.cpu().numpy().transpose(1, 2, 0)
+                img_att2_show = img_att2.cpu().numpy().transpose(1, 2, 0)
+                lidar_att2_show = lidar_att2.cpu().numpy().transpose(1, 2, 0)
+                img_att3_show = img_att3.cpu().numpy().transpose(1, 2, 0)
+                lidar_att3_show = lidar_att3.cpu().numpy().transpose(1, 2, 0)
+                img_att4_show = img_att4.cpu().numpy().transpose(1, 2, 0)
+                lidar_att4_show = lidar_att4.cpu().numpy().transpose(1, 2, 0)
+                img_att5_show = img_att5.cpu().numpy().transpose(1, 2, 0)
+                lidar_att5_show = lidar_att5.cpu().numpy().transpose(1, 2, 0)
+                img_att6_show = img_att6.cpu().numpy().transpose(1, 2, 0)
+                lidar_att6_show = lidar_att6.cpu().numpy().transpose(1, 2, 0)
+
+                img_orl_show = cv2.cvtColor(img_orl_show, cv2.COLOR_BGR2RGB)
+                img_att1_show = cv2.cvtColor(img_att1_show, cv2.COLOR_BGR2RGB)
+                img_att2_show = cv2.cvtColor(img_att2_show, cv2.COLOR_BGR2RGB)
+                img_att3_show = cv2.cvtColor(img_att3_show, cv2.COLOR_BGR2RGB)
+                img_att4_show = cv2.cvtColor(img_att4_show, cv2.COLOR_BGR2RGB)
+                img_att5_show = cv2.cvtColor(img_att5_show, cv2.COLOR_BGR2RGB)
+                img_att6_show = cv2.cvtColor(img_att6_show, cv2.COLOR_BGR2RGB)
+
+                cv2.imshow('img_att_show', img_orl_show)
+                cv2.imshow('lidar_orl_show', lidar_orl_show)
+                cv2.imshow('img_att1_show', img_att1_show)
+                cv2.imshow('lidar_att1_show', lidar_att1_show)
+                cv2.imshow('img_att2_show', img_att2_show)
+                cv2.imshow('lidar_att2_show', lidar_att2_show)
+                cv2.imshow('img_att3_show', img_att3_show)
+                cv2.imshow('lidar_att3_show', lidar_att3_show)
+                cv2.imshow('img_att4_show', img_att4_show)
+                cv2.imshow('lidar_att4_show', lidar_att4_show)
+                cv2.imshow('img_att5_show', img_att5_show)
+                cv2.imshow('lidar_att5_show', lidar_att5_show)
+                cv2.imshow('img_att6_show', img_att6_show)
+                cv2.imshow('lidar_att6_show', lidar_att6_show)
+                cv2.waitKey(10)
+                time.sleep(600)
+
             if att_type == 1:
-                img_att_zhedang = data_new['imgs_att'][att_t*8 + att_shijiao]
-                img_att_zhedang[:, 32:, 32:96] = 0
-
-                # img_att_show = img_att_zhedang.cpu().numpy().transpose(1, 2, 0)
-                # cv2.imshow('img_att_show', img_att_show)
-
-                data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att_zhedang
+                img_att = data_new['imgs_att'][att_t*8 + att_shijiao]
+                img_att[:, 32:, 32:96] = 0
+                data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att
 
                 # att lidar
                 lidar_att_zhedang = data_new['lidars_att'][att_t * 8 + att_shijiao]
                 lidar_att_zhedang[:, 16:, 30:90] = 0
-
-                # lidar_att_show = lidar_att_zhedang.cpu().numpy().transpose(1, 2, 0)
-                # cv2.imshow('lidar_att_show', lidar_att_show)
-                # cv2.waitKey(10)
-                # time.sleep(6)
-
                 data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang
 
 
             if att_type == 2:
                 Attack_intensity = random.uniform(0.35, 0.45)
                 # att img
-                img_att_zhedang = data_new['imgs_att'][att_t*8 + att_shijiao]
-                img_att_zhedang = sp_noise(img_att_zhedang, Attack_intensity)
-                data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att_zhedang
+                img_att = data_new['imgs_att'][att_t*8 + att_shijiao]
+                img_att = sp_noise(img_att, Attack_intensity)
+                data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att
 
                 # att lidar
                 lidar_att_zhedang = data_new['lidars_att'][att_t * 8 + att_shijiao]
                 lidar_att_zhedang = sp_noise(lidar_att_zhedang, Attack_intensity)
                 data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang
 
-
             if att_type == 3:
-                img_att_zhedang = data_new['imgs_att'][att_t*8 + att_shijiao]
-                img_att_zhedang[:, :, :] = 0
-                data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att_zhedang
+                img_att = data_new['imgs_att'][att_t*8 + att_shijiao]
+                img_att[:, :, :] = 0
+                data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att
 
                 # att lidar
                 lidar_att_zhedang = data_new['lidars_att'][att_t * 8 + att_shijiao]
                 lidar_att_zhedang[:, :, :] = 0
                 data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang
 
-
             if att_type == 4:
                 # att img
-                img_att_zhedang = data_new['imgs_att'][att_t*8 + att_shijiao]
-                img_att_zhedang = bright_contrast(1.5, 0.5, img_att_zhedang)
-                data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att_zhedang
+                img_att = data_new['imgs_att'][att_t*8 + att_shijiao]
+                img_att = bright_contrast(1.5, 0.5, img_att)
+                data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att
 
                 # att lidar
                 lidar_att_zhedang = data_new['lidars_att'][att_t * 8 + att_shijiao]
                 lidar_att_zhedang = bright_contrast(1.5, 0.5, lidar_att_zhedang)
                 data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang
 
-
             if att_type == 5:
                 if att_t==0:
                     # att img
-                    img_att_zhedang_t0 = data_new['imgs_att'][att_t*8 + att_shijiao]
-                    img_att_zhedang_t1 = data_new['imgs_att'][(att_t+1)*8 + att_shijiao]
-                    img_att_zhedang_t0 = (img_att_zhedang_t0 + img_att_zhedang_t1)/2
-                    data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att_zhedang_t0
+                    img_att_t0 = data_new['imgs_att'][att_t*8 + att_shijiao]
+                    img_att_t1 = data_new['imgs_att'][(att_t+1)*8 + att_shijiao]
+                    img_att_t0 = (img_att_t0 + img_att_t1)/2
+                    data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att_t0
 
                     # att lidar
                     lidar_att_zhedang_t0 = data_new['lidars_att'][att_t * 8 + att_shijiao]
@@ -639,17 +700,16 @@ class CARLA_Data(Dataset):
                     data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang_t0
                 else:
                     # att img
-                    img_att_zhedang_t = data_new['imgs_att'][att_t*8 + att_shijiao]
-                    img_att_zhedang_t_1 = data_new['imgs_att'][(att_t-1)*8 + att_shijiao]
-                    img_att_zhedang_t = (img_att_zhedang_t + img_att_zhedang_t_1)/2
-                    data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att_zhedang_t
+                    img_att_t = data_new['imgs_att'][att_t*8 + att_shijiao]
+                    img_att_t_1 = data_new['imgs_att'][(att_t-1)*8 + att_shijiao]
+                    img_att_t = (img_att_t + img_att_t_1)/2
+                    data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att_t
 
                     # att lidar
                     lidar_att_zhedang_t = data_new['lidars_att'][att_t * 8 + att_shijiao]
                     lidar_att_zhedang_t_1 = data_new['lidars_att'][(att_t-1) * 8 + att_shijiao]
                     lidar_att_zhedang_t = (lidar_att_zhedang_t + lidar_att_zhedang_t_1)/2
                     data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang_t
-
 
             if att_type == 6:
                 # att img
@@ -666,31 +726,83 @@ class CARLA_Data(Dataset):
             if att_type == 7:
                 if att_t==0:
                     # att img
-                    img_att_zhedang_t0 = data_new['imgs_att'][att_t*8 + att_shijiao]
-                    data_new['imgs_att'][(att_t+1)*8 + att_shijiao] = img_att_zhedang_t0
+                    img_att_t0 = data_new['imgs_att'][att_t*8 + att_shijiao]
+                    data_new['imgs_att'][(att_t+1)*8 + att_shijiao] = img_att_t0
 
                     # att lidar
                     lidar_att_zhedang_t0 = data_new['lidars_att'][att_t * 8 + att_shijiao]
                     data_new['lidars_att'][(att_t+1)*8 + att_shijiao] = lidar_att_zhedang_t0
                 else:
                     # att img
-                    img_att_zhedang_t_1 = data_new['imgs_att'][(att_t-1)*8 + att_shijiao]
-                    data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att_zhedang_t_1
+                    img_att_t_1 = data_new['imgs_att'][(att_t-1)*8 + att_shijiao]
+                    data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att_t_1
 
                     # att lidar
                     lidar_att_zhedang_t_1 = data_new['lidars_att'][(att_t-1) * 8 + att_shijiao]
                     data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang_t_1
 
+            # if att_type == 8:
+            #     # att img
+            #     img_att = data_new['imgs_att'][att_t*8 + att_shijiao]
+            #     img_att = torch.tensor(self.fan_mat).unsqueeze(0).repeat(3, 1, 1)*img_att
+            #     data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att
+
+            #     # att lidar
+            #     lidar_att_zhedang = data_new['lidars_att'][att_t * 8 + att_shijiao]
+            #     # lidar_att_zhedang = torch.tensor(self.fan_mat).unsqueeze(0).repeat(3, 1, 1)*lidar_att_zhedang
+            #     data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang
+
             if att_type == 8:
                 # att img
-                img_att_zhedang = data_new['imgs_att'][att_t*8 + att_shijiao]
-                img_att_zhedang = torch.tensor(self.fan_mat).unsqueeze(0).repeat(3, 1, 1)*img_att_zhedang
-                data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att_zhedang
+                img_att = data_new['imgs_att'][att_t*8 + att_shijiao]
+                img_att[:, :, 60:68] = 0
+                data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att
 
                 # att lidar
                 lidar_att_zhedang = data_new['lidars_att'][att_t * 8 + att_shijiao]
-                lidar_att_zhedang = torch.tensor(self.fan_mat).unsqueeze(0).repeat(3, 1, 1)*lidar_att_zhedang
+                lidar_att_zhedang[:, :, 58:64] = 0
                 data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang
+
+            if att_type == 9:
+                att_sensor = np.random.randint(1, 3)
+                if att_sensor == 1:
+                    # att img
+                    data_new['imgs_att'][(att_t+2)*8 + att_shijiao] = data_new_last['imgs_att'][(att_t+1)*8 + att_shijiao]
+                    data_new['imgs_att'][(att_t+1)*8 + att_shijiao] = data_new_last['imgs_att'][att_t*8 + att_shijiao]
+                    data_new['imgs_att'][att_t*8 + att_shijiao] = data_new_last['imgs_att'][att_t*8 + att_shijiao]
+
+                    data_new['imgs_att'][(att_t+2)*8 + att_shijiao+1] = data_new_last['imgs_att'][(att_t+1)*8 + att_shijiao+1]
+                    data_new['imgs_att'][(att_t+1)*8 + att_shijiao+1] = data_new_last['imgs_att'][att_t*8 + att_shijiao+1]
+                    data_new['imgs_att'][att_t*8 + att_shijiao+1] = data_new_last['imgs_att'][att_t*8 + att_shijiao+1]
+                else:
+                    # att lidar
+                    data_new['lidars_att'][(att_t+2)*8 + att_shijiao] = data_new_last['lidars_att'][(att_t+1)*8 + att_shijiao]
+                    data_new['lidars_att'][(att_t+1)*8 + att_shijiao] = data_new_last['lidars_att'][att_t*8 + att_shijiao]
+                    data_new['lidars_att'][att_t*8 + att_shijiao] = data_new_last['lidars_att'][att_t*8 + att_shijiao]
+
+                    data_new['lidars_att'][(att_t+2)*8 + att_shijiao+1] = data_new_last['lidars_att'][(att_t+1)*8 + att_shijiao+1]
+                    data_new['lidars_att'][(att_t+1)*8 + att_shijiao+1] = data_new_last['lidars_att'][att_t*8 + att_shijiao+1]
+                    data_new['lidars_att'][att_t*8 + att_shijiao+1] = data_new_last['lidars_att'][att_t*8 + att_shijiao+1]
+                
+                break
+
+
+            if att_type == 10:
+                att_sensor = np.random.randint(1, 3)
+                if att_sensor == 1:
+                    # att img
+                    data_new['imgs_att'][16:24] = data_new_last['imgs_att'][8:16]
+                    data_new['imgs_att'][8:16] = data_new_last['imgs_att'][0:8]
+                    data_new['imgs_att'][0:8] = data_new_last['imgs_att'][16:24]
+                else:
+                    # att lidar
+                    data_new['lidars_att'][16:24] = data_new_last['lidars_att'][8:16]
+                    data_new['lidars_att'][8:16] = data_new_last['lidars_att'][0:8]
+                    data_new['lidars_att'][0:8] = data_new_last['lidars_att'][16:24]
+                break
+
+
+        data_new_last = copy.deepcopy(data_new)
 
         data_new['att_nodes'] = self.choice_nodes
 

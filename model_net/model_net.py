@@ -573,9 +573,9 @@ class model_all(nn.Module):
             return features_rec
 
         if self.train_model==3:
-            imgs_att_batch = torch.stack(data['imgs_clean'], dim=0)  # 24 * 12 * 3 * 128 *128
+            imgs_att_batch = torch.stack(data['imgs_clean'], dim=0).unsqueeze(1) # 24 * 12 * 3 * 128 *128
             imgs_att_batch = imgs_att_batch.view(-1, 3 * 128 * 128).to(device)
-            lidars_att_batch = torch.stack(data['lidars_clean'], dim=0).type(torch.float32) # 24 * 12 * 3 * 64 *122
+            lidars_att_batch = torch.stack(data['lidars_clean'], dim=0).unsqueeze(1).type(torch.float32) # 24 * 12 * 3 * 64 *122
             lidars_att_batch = lidars_att_batch.view(-1, 64 * 122).to(device)
 
             vae_feature_att, _, _ = self.model_vae(imgs_att_batch, lidars_att_batch)
@@ -606,6 +606,14 @@ class model_all(nn.Module):
 
             features_rec = self.model_feature_rec(vae_feature_att, S_adj, vae_feature_att)
 
+            # img_rec_att1 = vae_fixed_parameters.decoder_img(features_rec[0][16]).cpu().detach().numpy().reshape(3, 128, 128).transpose(1, 2, 0)
+            # img_rec_att1 = cv2.cvtColor(img_rec_att1, cv2.COLOR_BGR2RGB)
+            # cv2.imshow('img_rec_att1', img_rec_att1)
+            # lidar_rec_att1 = vae_fixed_parameters.decoder_lidar(features_rec[0][16]).cpu().detach().numpy().reshape(1, 64, 122).transpose(1, 2, 0)
+            # lidar_rec_att1 = cv2.cvtColor(lidar_rec_att1, cv2.COLOR_BGR2RGB)
+            # cv2.imshow('lidar_rec_att1', lidar_rec_att1)
+            # cv2.waitKey(10)
+
             L = feature_smoothing_batch(S_adj)
             coeffient = torch.eye(24).unsqueeze(0).repeat(self.batch, 1, 1).to(device) + 2.5 * L
             coeffient = torch.linalg.inv(coeffient)
@@ -613,7 +621,7 @@ class model_all(nn.Module):
 
             target_point = torch.stack(data['target_point'], dim=1).to(device, dtype=torch.float32)
             # red_light = data['red_light'][0][0].to(device, dtype=torch.float32)
-            red_light = torch.randn(1).to(device, dtype=torch.float32)
+            red_light = torch.tensor([0]).to(device, dtype=torch.float32)
             pred_wp = self.model_nav(features_rec_step2[:, nav_shijiao], target_point, red_light)
 
             return pred_wp

@@ -45,39 +45,39 @@ class ATTACK():
 
         if l_r == 3:
             left_right = int(left_right_front)  # 正前方
-        # if l_r == 2:
-        #     left_right = int(left_right_front - (left_right_front - left_right_l_r)/3)
-        # if l_r == 1:
-        #     left_right = int(left_right_front - 2*(left_right_front - left_right_l_r)/3)
-        # if l_r == 0:
-        #     left_right = int(left_right_l_r)
-        # if l_r == 4:
-        #     left_right = int(left_right_front + (left_right_front - left_right_l_r)/3)
-        # if l_r == 5:
-        #     left_right = int(left_right_front + 2*(left_right_front - left_right_l_r)/3)
-        # if l_r == 6:
-        #     left_right = int(left_right_front + 3*(left_right_front - left_right_l_r)/3)
+        if l_r == 2:
+            left_right = int(left_right_front - (left_right_front - left_right_l_r)/3)
+        if l_r == 1:
+            left_right = int(left_right_front - 2*(left_right_front - left_right_l_r)/3)
+        if l_r == 0:
+            left_right = int(left_right_l_r)
+        if l_r == 4:
+            left_right = int(left_right_front + (left_right_front - left_right_l_r)/3)
+        if l_r == 5:
+            left_right = int(left_right_front + 2*(left_right_front - left_right_l_r)/3)
+        if l_r == 6:
+            left_right = int(left_right_front + 3*(left_right_front - left_right_l_r)/3)
         x = a[0] * resize
         y = a[1] * resize
 
-        # if up_down + int(x) >= 300 and left_right <= 0:
-        #     base_part = base_image[up_down:, :left_right + int(y), :]
-        #     fore_image = cv2.resize(fore_image, (int(y), int(x)))
-        # elif up_down + int(x) >= 300 and left_right + int(y) >= 400:
-        #     base_part = base_image[up_down:, left_right:, :]
-        #     fore_image = cv2.resize(fore_image, (int(y), int(x)))
-        # elif up_down + int(x) >= 300 and 0 < left_right and left_right + int(y) < 400:
-        #     base_part = base_image[up_down:, left_right:left_right + int(y), :]
-        #     fore_image = cv2.resize(fore_image, (int(y), int(x)))
-        # elif left_right <= 0 and up_down + int(x) < 300:
-        #     base_part = base_image[up_down:, :left_right + int(y), :]
-        #     fore_image = cv2.resize(fore_image, (int(y), int(x)))
-        # elif left_right + int(y) >= 400 and up_down + int(x) < 300:
-        #     base_part = base_image[up_down:up_down + int(x), left_right:, :]
-        #     fore_image = cv2.resize(fore_image, (int(y), int(x)))
-        # else:
-        #     base_part = base_image[up_down:up_down + int(x), left_right:left_right + int(y), :]
-        #     fore_image = cv2.resize(fore_image, (base_part.shape[1], base_part.shape[0]))
+        if up_down + int(x) >= 300 and left_right <= 0:
+            base_part = base_image[up_down:, :left_right + int(y), :]
+            fore_image = cv2.resize(fore_image, (int(y), int(x)))
+        elif up_down + int(x) >= 300 and left_right + int(y) >= 400:
+            base_part = base_image[up_down:, left_right:, :]
+            fore_image = cv2.resize(fore_image, (int(y), int(x)))
+        elif up_down + int(x) >= 300 and 0 < left_right and left_right + int(y) < 400:
+            base_part = base_image[up_down:, left_right:left_right + int(y), :]
+            fore_image = cv2.resize(fore_image, (int(y), int(x)))
+        elif left_right <= 0 and up_down + int(x) < 300:
+            base_part = base_image[up_down:, :left_right + int(y), :]
+            fore_image = cv2.resize(fore_image, (int(y), int(x)))
+        elif left_right + int(y) >= 400 and up_down + int(x) < 300:
+            base_part = base_image[up_down:up_down + int(x), left_right:, :]
+            fore_image = cv2.resize(fore_image, (int(y), int(x)))
+        else:
+            base_part = base_image[up_down:up_down + int(x), left_right:left_right + int(y), :]
+            fore_image = cv2.resize(fore_image, (base_part.shape[1], base_part.shape[0]))
 
         base_part = base_image[up_down:up_down + int(x), left_right:left_right + int(y), :]
         fore_image = cv2.resize(fore_image, (base_part.shape[1], base_part.shape[0]))
@@ -91,35 +91,35 @@ class ATTACK():
                 for z in range(res_.shape[2]):
                     if res_[i][p][z] != 0.:
                         res_[i][p][z] = fore_image[i][p][z] / 255
-        # if up_down + int(x) >= 300 and 0 < left_right and left_right + int(y) < 400:
-        #     base_part = cv2.copyMakeBorder(base_part, 0, int(up_down + int(x) - 300), 0, 0,
-        #                                    cv2.BORDER_CONSTANT, value=[0, 0, 0])
-        # elif up_down + int(x) >= 300 and left_right <= 0:
-        #     base_part = cv2.copyMakeBorder(base_part, 0, int(up_down + int(x) - 300), int(-left_right), 0,
-        #                                    cv2.BORDER_CONSTANT, value=[0, 0, 0])
-        # elif up_down + int(x) >= 300 and left_right + int(y) >= 400:
-        #     base_part = cv2.copyMakeBorder(base_part, 0, int(up_down + int(x) - 300), 0, int(left_right + int(y) - 400),
-        #                                    cv2.BORDER_CONSTANT, value=[0, 0, 0])
-        # elif left_right <= 0 and up_down + int(x) < 300:
-        #     base_part = cv2.copyMakeBorder(base_part, 0, 0, int(-left_right), 0,
-        #                                    cv2.BORDER_CONSTANT, value=[0, 0, 0])
-        # elif left_right + int(y) >= 400 and up_down + int(x) < 300:
-        #     base_part = cv2.copyMakeBorder(base_part, 0, 0, 0, int(left_right + int(y) - 400),
-        #                                    cv2.BORDER_CONSTANT, value=[0, 0, 0])
+        if up_down + int(x) >= 300 and 0 < left_right and left_right + int(y) < 400:
+            base_part = cv2.copyMakeBorder(base_part, 0, int(up_down + int(x) - 300), 0, 0,
+                                           cv2.BORDER_CONSTANT, value=[0, 0, 0])
+        elif up_down + int(x) >= 300 and left_right <= 0:
+            base_part = cv2.copyMakeBorder(base_part, 0, int(up_down + int(x) - 300), int(-left_right), 0,
+                                           cv2.BORDER_CONSTANT, value=[0, 0, 0])
+        elif up_down + int(x) >= 300 and left_right + int(y) >= 400:
+            base_part = cv2.copyMakeBorder(base_part, 0, int(up_down + int(x) - 300), 0, int(left_right + int(y) - 400),
+                                           cv2.BORDER_CONSTANT, value=[0, 0, 0])
+        elif left_right <= 0 and up_down + int(x) < 300:
+            base_part = cv2.copyMakeBorder(base_part, 0, 0, int(-left_right), 0,
+                                           cv2.BORDER_CONSTANT, value=[0, 0, 0])
+        elif left_right + int(y) >= 400 and up_down + int(x) < 300:
+            base_part = cv2.copyMakeBorder(base_part, 0, 0, 0, int(left_right + int(y) - 400),
+                                           cv2.BORDER_CONSTANT, value=[0, 0, 0])
 
         res_image = res_ + np.multiply((1 - scope_map), base_part)
-        # if up_down + int(x) >= 300 and 0 < left_right and left_right + int(y) < 400:
-        #     base_image[up_down:, left_right:left_right + int(y)] = res_image[:300 - up_down, :]
-        # elif up_down + int(x) >= 300 and left_right <= 0:
-        #     base_image[up_down:, :left_right + int(y)] = res_image[:300 - up_down, int(-left_right):]
-        # elif up_down + int(x) >= 300 and left_right + int(y) >= 400:
-        #     base_image[up_down:, left_right:] = res_image[:300 - up_down, :400 - left_right]
-        # elif left_right <= 0 and up_down + int(x) < 300:
-        #     base_image[up_down:up_down + int(x), :left_right + int(y)] = res_image[:, int(-left_right):]
-        # elif left_right + int(y) >= 400 and up_down + int(x) < 300:
-        #     base_image[up_down:up_down + int(x), left_right:] = res_image[:, :400 - left_right]
-        # else:
-        #     base_image[up_down:up_down + int(x), left_right:left_right + int(y)] = res_image
+        if up_down + int(x) >= 300 and 0 < left_right and left_right + int(y) < 400:
+            base_image[up_down:, left_right:left_right + int(y)] = res_image[:300 - up_down, :]
+        elif up_down + int(x) >= 300 and left_right <= 0:
+            base_image[up_down:, :left_right + int(y)] = res_image[:300 - up_down, int(-left_right):]
+        elif up_down + int(x) >= 300 and left_right + int(y) >= 400:
+            base_image[up_down:, left_right:] = res_image[:300 - up_down, :400 - left_right]
+        elif left_right <= 0 and up_down + int(x) < 300:
+            base_image[up_down:up_down + int(x), :left_right + int(y)] = res_image[:, int(-left_right):]
+        elif left_right + int(y) >= 400 and up_down + int(x) < 300:
+            base_image[up_down:up_down + int(x), left_right:] = res_image[:, :400 - left_right]
+        else:
+            base_image[up_down:up_down + int(x), left_right:left_right + int(y)] = res_image
 
         base_image[up_down:up_down + int(x), left_right:left_right + int(y)] = res_image
 
@@ -160,15 +160,23 @@ class ATTACK():
 
 attack = ATTACK()
 
+unloader=transforms.ToPILImage()
+def tensor2PIL(tensor):
+    image=tensor.cpu().clone()
+    image=image.squeeze(0)
+    image=unloader(image)
+    return image
 
 class CARLA_Data(Dataset):
 
     def __init__(self, root_path,batch_size):
         self.batch_size = batch_size
+
+        self.data_new_last = None
         # self.choice_nodes = random.sample(range(0, 24), 6)
         # self.rand()
         self.fan_mat=Sector(47.2,5)
-
+        
         self.seq_len = 1
         self.pred_len = 4
 
@@ -203,24 +211,41 @@ class CARLA_Data(Dataset):
         self.front_rh = []
         self.front_lh = []
 
+        self.lidar_his = []
+        self.lidar_l_his = []
+        self.lidar_r_his = []
+        self.lidar_h_his = []
+        self.lidar_rf_his = []
+        self.lidar_lf_his = []
+        self.lidar_rh_his = []
+        self.lidar_lh_his = []
+
+        self.front_his = []
+        self.front_l_his = []
+        self.front_r_his = []
+        self.front_h_his = []
+        self.front_rf_his = []
+        self.front_lf_his = []
+        self.front_rh_his = []
+        self.front_lh_his = []
+
         self.red_light = []
 
         for sub_root in root_path:
             preload_file = './others/dataset_0901.npy'
             if True:
-                preload_front = []
-                preload_lidar = []
-                preload_front_l = []
-                preload_lidar_l = []
-                preload_front_r = []
-                preload_lidar_r = []
-
                 preload_x = []
                 preload_y = []
                 preload_theta = []
                 preload_x_command = []
                 preload_y_command = []
 
+                preload_front = []
+                preload_lidar = []
+                preload_front_l = []
+                preload_lidar_l = []
+                preload_front_r = []
+                preload_lidar_r = []
                 preload_front_h = []
                 preload_lidar_h = []
                 preload_front_rf = []
@@ -231,6 +256,23 @@ class CARLA_Data(Dataset):
                 preload_lidar_rh = []
                 preload_front_lh = []
                 preload_lidar_lh = []
+
+                preload_front_his = []
+                preload_lidar_his = []
+                preload_front_l_his = []
+                preload_lidar_l_his = []
+                preload_front_r_his = []
+                preload_lidar_r_his = []
+                preload_front_h_his = []
+                preload_lidar_h_his = []
+                preload_front_rf_his = []
+                preload_lidar_rf_his = []
+                preload_front_lf_his = []
+                preload_lidar_lf_his = []
+                preload_front_rh_his = []
+                preload_lidar_rh_his = []
+                preload_front_lh_his = []
+                preload_lidar_lh_his = []
 
                 preload_red_light = []
 
@@ -267,6 +309,23 @@ class CARLA_Data(Dataset):
                         fronts_lh = []
                         lidars_lh = []
 
+                        fronts_his = []
+                        lidars_his = []
+                        fronts_l_his = []
+                        lidars_l_his = []
+                        fronts_r_his = []
+                        lidars_r_his = []
+                        fronts_h_his = []
+                        lidars_h_his = []
+                        fronts_rf_his = []
+                        lidars_rf_his = []
+                        fronts_lf_his = []
+                        lidars_lf_his = []
+                        fronts_rh_his = []
+                        lidars_rh_his = []
+                        fronts_lh_his = []
+                        lidars_lh_his = []
+
                         red_light = []
 
                         # read files sequentially (past and current frames)
@@ -279,21 +338,28 @@ class CARLA_Data(Dataset):
                                 else:
                                     filename = f"{str(seq * self.seq_len + i + j + 1).zfill(4)}.png"
                                 fronts.append(route_dir + "/rgb_front/" + filename)
-                                # images
                                 fronts_l.append(route_dir + "/rgb_left/" + filename)
-                                # images
                                 fronts_r.append(route_dir + "/rgb_right/" + filename)
-
                                 fronts_h.append(route_dir + "/rgb_rear/" + filename)
-
                                 fronts_rf.append(route_dir + "/rgb_front_right/" + filename)
-
                                 fronts_lf.append(route_dir + "/rgb_front_left/" + filename)
-
                                 fronts_rh.append(route_dir + "/rgb_rear_right/" + filename)
-
                                 fronts_lh.append(route_dir + "/rgb_rear_left/" + filename)
                                 # print('img address',filename)
+
+                                if j ==0:
+                                    file_id = seq * self.seq_len + j + i - 10
+                                    if file_id<=0:
+                                        file_id=0
+                                    filename_his = f"{str(file_id).zfill(4)}.png"
+                                    fronts_his.append(route_dir + "/rgb_front/" + filename_his)
+                                    fronts_l_his.append(route_dir + "/rgb_left/" + filename_his)
+                                    fronts_r_his.append(route_dir + "/rgb_right/" + filename_his)
+                                    fronts_h_his.append(route_dir + "/rgb_rear/" + filename_his)
+                                    fronts_rf_his.append(route_dir + "/rgb_front_right/" + filename_his)
+                                    fronts_lf_his.append(route_dir + "/rgb_front_left/" + filename_his)
+                                    fronts_rh_his.append(route_dir + "/rgb_rear_right/" + filename_his)
+                                    fronts_lh_his.append(route_dir + "/rgb_rear_left/" + filename_his)
 
                             # lidars
                             for j in range(3):
@@ -304,21 +370,27 @@ class CARLA_Data(Dataset):
                                     filename = f"{str(seq * self.seq_len + i + j + 1).zfill(4)}.npy"
 
                                 lidars.append(route_dir + "/lidar_qvzao_front/" + filename)
-
                                 lidars_l.append(route_dir + "/lidar_qvzao_left/" + filename)
-
                                 lidars_r.append(route_dir + "/lidar_qvzao_right/" + filename)
-
                                 lidars_h.append(route_dir + "/lidar_qvzao_rear/" + filename)
-
                                 lidars_rf.append(route_dir + "/lidar_qvzao_front_right/" + filename)
-
                                 lidars_lf.append(route_dir + "/lidar_qvzao_front_left/" + filename)
-
                                 lidars_rh.append(route_dir + "/lidar_qvzao_rear_right/" + filename)
-
                                 lidars_lh.append(route_dir + "/lidar_qvzao_rear_left/" + filename)
 
+                                if j ==0:
+                                    file_id = seq * self.seq_len + j + i - 10
+                                    if file_id<=0:
+                                        file_id=0
+                                    filename_his = f"{str(file_id).zfill(4)}.npy"
+                                    lidars_his.append(route_dir + "/lidar_qvzao_front/" + filename_his)
+                                    lidars_l_his.append(route_dir + "/lidar_qvzao_left/" + filename_his)
+                                    lidars_r_his.append(route_dir + "/lidar_qvzao_right/" + filename_his)
+                                    lidars_h_his.append(route_dir + "/lidar_qvzao_rear/" + filename_his)
+                                    lidars_rf_his.append(route_dir + "/lidar_qvzao_front_right/" + filename_his)
+                                    lidars_lf_his.append(route_dir + "/lidar_qvzao_front_left/" + filename_his)
+                                    lidars_rh_his.append(route_dir + "/lidar_qvzao_rear_right/" + filename_his)
+                                    lidars_lh_his.append(route_dir + "/lidar_qvzao_rear_left/" + filename_his)
 
                             with open(route_dir + f"/measurements/{str(seq*self.seq_len+1+i+2).zfill(4)}.json", "r") as read_file:
                                 data = json.load(read_file)
@@ -346,17 +418,16 @@ class CARLA_Data(Dataset):
                             else:
                                 thetas.append(data['theta'])
 
+                        preload_x.append(xs)
+                        preload_y.append(ys)
+                        preload_theta.append(thetas)
+
                         preload_front.append(fronts)
                         preload_lidar.append(lidars)
                         preload_front_l.append(fronts_l)
                         preload_lidar_l.append(lidars_l)
                         preload_front_r.append(fronts_r)
                         preload_lidar_r.append(lidars_r)
-
-                        preload_x.append(xs)
-                        preload_y.append(ys)
-                        preload_theta.append(thetas)
-
                         preload_front_h.append(fronts_h)
                         preload_lidar_h.append(lidars_h)
                         preload_front_rf.append(fronts_rf)
@@ -367,6 +438,23 @@ class CARLA_Data(Dataset):
                         preload_lidar_rh.append(lidars_rh)
                         preload_front_lh.append(fronts_lh)
                         preload_lidar_lh.append(lidars_lh)
+
+                        preload_front_his.append(fronts_his)
+                        preload_lidar_his.append(lidars_his)
+                        preload_front_l_his.append(fronts_l_his)
+                        preload_lidar_l_his.append(lidars_l_his)
+                        preload_front_r_his.append(fronts_r_his)
+                        preload_lidar_r_his.append(lidars_r_his)
+                        preload_front_h_his.append(fronts_h_his)
+                        preload_lidar_h_his.append(lidars_h_his)
+                        preload_front_rf_his.append(fronts_rf_his)
+                        preload_lidar_rf_his.append(lidars_rf_his)
+                        preload_front_lf_his.append(fronts_lf_his)
+                        preload_lidar_lf_his.append(lidars_lf_his)
+                        preload_front_rh_his.append(fronts_rh_his)
+                        preload_lidar_rh_his.append(lidars_rh_his)
+                        preload_front_lh_his.append(fronts_lh_his)
+                        preload_lidar_lh_his.append(lidars_lh_his)
 
                         preload_red_light.append(red_light)
 
@@ -387,7 +475,6 @@ class CARLA_Data(Dataset):
                 preload_dict['lidar_l'] = preload_lidar_l
                 preload_dict['front_r'] = preload_front_r
                 preload_dict['lidar_r'] = preload_lidar_r
-
                 preload_dict['front_h'] = preload_front_h
                 preload_dict['lidar_h'] = preload_lidar_h
                 preload_dict['front_rf'] = preload_front_rf
@@ -398,6 +485,23 @@ class CARLA_Data(Dataset):
                 preload_dict['lidar_rh'] = preload_lidar_rh
                 preload_dict['front_lh'] = preload_front_lh
                 preload_dict['lidar_lh'] = preload_lidar_lh
+
+                preload_dict['front_his'] = preload_front_his
+                preload_dict['lidar_his'] = preload_lidar_his
+                preload_dict['front_l_his'] = preload_front_l_his
+                preload_dict['lidar_l_his'] = preload_lidar_l_his
+                preload_dict['front_r_his'] = preload_front_r_his
+                preload_dict['lidar_r_his'] = preload_lidar_r_his
+                preload_dict['front_h_his'] = preload_front_h_his
+                preload_dict['lidar_h_his'] = preload_lidar_h_his
+                preload_dict['front_rf_his'] = preload_front_rf_his
+                preload_dict['lidar_rf_his'] = preload_lidar_rf_his
+                preload_dict['front_lf_his'] = preload_front_lf_his
+                preload_dict['lidar_lf_his'] = preload_lidar_lf_his
+                preload_dict['front_rh_his'] = preload_front_rh_his
+                preload_dict['lidar_rh_his'] = preload_lidar_rh_his
+                preload_dict['front_lh_his'] = preload_front_lh_his
+                preload_dict['lidar_lh_his'] = preload_lidar_lh_his
 
                 preload_dict['red_light'] = preload_red_light
 
@@ -418,7 +522,6 @@ class CARLA_Data(Dataset):
             self.lidar_l += preload_dict.item()['lidar_l']
             self.front_r += preload_dict.item()['front_r']
             self.lidar_r += preload_dict.item()['lidar_r']
-
             self.front_h += preload_dict.item()['front_h']
             self.lidar_h += preload_dict.item()['lidar_h']
             self.front_rf += preload_dict.item()['front_rf']
@@ -429,6 +532,23 @@ class CARLA_Data(Dataset):
             self.lidar_rh += preload_dict.item()['lidar_rh']
             self.front_lh += preload_dict.item()['front_lh']
             self.lidar_lh += preload_dict.item()['lidar_lh']
+
+            self.front_his += preload_dict.item()['front_his']
+            self.lidar_his += preload_dict.item()['lidar_his']
+            self.front_l_his += preload_dict.item()['front_l_his']
+            self.lidar_l_his += preload_dict.item()['lidar_l_his']
+            self.front_r_his += preload_dict.item()['front_r_his']
+            self.lidar_r_his += preload_dict.item()['lidar_r_his']
+            self.front_h_his += preload_dict.item()['front_h_his']
+            self.lidar_h_his += preload_dict.item()['lidar_h_his']
+            self.front_rf_his += preload_dict.item()['front_rf_his']
+            self.lidar_rf_his += preload_dict.item()['lidar_rf_his']
+            self.front_lf_his += preload_dict.item()['front_lf_his']
+            self.lidar_lf_his += preload_dict.item()['lidar_lf_his']
+            self.front_rh_his += preload_dict.item()['front_rh_his']
+            self.lidar_rh_his += preload_dict.item()['lidar_rh_his']
+            self.front_lh_his += preload_dict.item()['front_lh_his']
+            self.lidar_lh_his += preload_dict.item()['lidar_lh_his']
 
             self.red_light += preload_dict.item()['red_light']
 
@@ -463,6 +583,9 @@ class CARLA_Data(Dataset):
         data_new['lidars_clean'] = []
         data_new['lidars_att'] = []
 
+        data_new['imgs_his'] = []
+        data_new['lidars_his'] = []
+
         seq_fronts = self.front[index]
         seq_lidars = self.lidar[index]
         seq_fronts_l = self.front_l[index]
@@ -471,7 +594,6 @@ class CARLA_Data(Dataset):
         seq_lidars_r = self.lidar_r[index]
         seq_fronts_h = self.front_h[index]
         seq_lidars_h = self.lidar_h[index]
-
         seq_fronts_rf = self.front_rf[index]
         seq_lidars_rf = self.lidar_rf[index]
         seq_fronts_lf = self.front_lf[index]
@@ -480,6 +602,23 @@ class CARLA_Data(Dataset):
         seq_lidars_rh = self.lidar_rh[index]
         seq_fronts_lh = self.front_lh[index]
         seq_lidars_lh = self.lidar_lh[index]
+
+        seq_fronts_his = self.front_his[index]
+        seq_lidars_his = self.lidar_his[index]
+        seq_fronts_l_his = self.front_l_his[index]
+        seq_lidars_l_his = self.lidar_l_his[index]
+        seq_fronts_r_his = self.front_r_his[index]
+        seq_lidars_r_his = self.lidar_r_his[index]
+        seq_fronts_h_his = self.front_h_his[index]
+        seq_lidars_h_his = self.lidar_h_his[index]
+        seq_fronts_rf_his = self.front_rf_his[index]
+        seq_lidars_rf_his = self.lidar_rf_his[index]
+        seq_fronts_lf_his = self.front_lf_his[index]
+        seq_lidars_lf_his = self.lidar_lf_his[index]
+        seq_fronts_rh_his = self.front_rh_his[index]
+        seq_lidars_rh_his = self.lidar_rh_his[index]
+        seq_fronts_lh_his = self.front_lh_his[index]
+        seq_lidars_lh_his = self.lidar_lh_his[index]
 
         for i in range(len(seq_fronts)):
             data_new['imgs_clean'].append(transform_img(Image.open(seq_fronts[i])))
@@ -500,27 +639,47 @@ class CARLA_Data(Dataset):
             data_new['imgs_clean_ori'].append(np.array(plt.imread(seq_fronts_r[i])))
             data_new['imgs_clean_ori'].append(np.array(plt.imread(seq_fronts_rf[i])))
 
-            lidar_d = np.load(seq_lidars[i]).astype(np.float32)
-            data_new['lidars_clean'].append(transform_lidar(lidar_d))
+            if i==1:
+                data_new['imgs_his'].append(transform_img(Image.open(seq_fronts_his[0])))
+                data_new['imgs_his'].append(transform_img(Image.open(seq_fronts_lf_his[0])))
+                data_new['imgs_his'].append(transform_img(Image.open(seq_fronts_l_his[0])))
+                data_new['imgs_his'].append(transform_img(Image.open(seq_fronts_lh_his[0])))
+                data_new['imgs_his'].append(transform_img(Image.open(seq_fronts_h_his[0])))
+                data_new['imgs_his'].append(transform_img(Image.open(seq_fronts_rh_his[0])))
+                data_new['imgs_his'].append(transform_img(Image.open(seq_fronts_r_his[0])))
+                data_new['imgs_his'].append(transform_img(Image.open(seq_fronts_rf_his[0])))
 
+                lidar_d = np.load(seq_lidars[0]).astype(np.float32)
+                data_new['lidars_his'].append(transform_lidar(lidar_d))
+                lidar_d_lf = np.load(seq_lidars_lf_his[0]).astype(np.float32)
+                data_new['lidars_his'].append(transform_lidar(lidar_d_lf))
+                lidar_d_l = np.load(seq_lidars_l_his[0]).astype(np.float32)
+                data_new['lidars_his'].append(transform_lidar(lidar_d_l))
+                lidar_d_lh = np.load(seq_lidars_lh_his[0]).astype(np.float32)
+                data_new['lidars_his'].append(transform_lidar(lidar_d_lh))
+                lidar_d_h = np.load(seq_lidars_h_his[0]).astype(np.float32)
+                data_new['lidars_his'].append(transform_lidar(lidar_d_h))
+                lidar_d_rh = np.load(seq_lidars_rh_his[0]).astype(np.float32)
+                data_new['lidars_his'].append(transform_lidar(lidar_d_rh))
+                lidar_d_r = np.load(seq_lidars_r_his[0]).astype(np.float32)
+                data_new['lidars_his'].append(transform_lidar(lidar_d_r))
+                lidar_d_rf = np.load(seq_lidars_rf_his[0]).astype(np.float32)
+                data_new['lidars_his'].append(transform_lidar(lidar_d_rf))
+
+            lidar_d = np.load(seq_lidars_his[i]).astype(np.float32)
+            data_new['lidars_clean'].append(transform_lidar(lidar_d))
             lidar_d_lf = np.load(seq_lidars_lf[i]).astype(np.float32)
             data_new['lidars_clean'].append(transform_lidar(lidar_d_lf))
-
             lidar_d_l = np.load(seq_lidars_l[i]).astype(np.float32)
             data_new['lidars_clean'].append(transform_lidar(lidar_d_l))
-
             lidar_d_lh = np.load(seq_lidars_lh[i]).astype(np.float32)
             data_new['lidars_clean'].append(transform_lidar(lidar_d_lh))
-
             lidar_d_h = np.load(seq_lidars_h[i]).astype(np.float32)
             data_new['lidars_clean'].append(transform_lidar(lidar_d_h))
-
             lidar_d_rh = np.load(seq_lidars_rh[i]).astype(np.float32)
             data_new['lidars_clean'].append(transform_lidar(lidar_d_rh))
-
             lidar_d_r = np.load(seq_lidars_r[i]).astype(np.float32)
             data_new['lidars_clean'].append(transform_lidar(lidar_d_r))
-
             lidar_d_rf = np.load(seq_lidars_rf[i]).astype(np.float32)
             data_new['lidars_clean'].append(transform_lidar(lidar_d_rf))
 
@@ -536,25 +695,18 @@ class CARLA_Data(Dataset):
 
             lidar_d = np.load(seq_lidars[i]).astype(np.float32)
             data_new['lidars_att'].append(transform_lidar(lidar_d))
-
             lidar_d_lf = np.load(seq_lidars_lf[i]).astype(np.float32)
             data_new['lidars_att'].append(transform_lidar(lidar_d_lf))
-
             lidar_d_l = np.load(seq_lidars_l[i]).astype(np.float32)
             data_new['lidars_att'].append(transform_lidar(lidar_d_l))
-
             lidar_d_lh = np.load(seq_lidars_lh[i]).astype(np.float32)
             data_new['lidars_att'].append(transform_lidar(lidar_d_lh))
-
             lidar_d_h = np.load(seq_lidars_h[i]).astype(np.float32)
             data_new['lidars_att'].append(transform_lidar(lidar_d_h))
-
             lidar_d_rh = np.load(seq_lidars_rh[i]).astype(np.float32)
             data_new['lidars_att'].append(transform_lidar(lidar_d_rh))
-
             lidar_d_r = np.load(seq_lidars_r[i]).astype(np.float32)
             data_new['lidars_att'].append(transform_lidar(lidar_d_r))
-
             lidar_d_rf = np.load(seq_lidars_rf[i]).astype(np.float32)
             data_new['lidars_att'].append(transform_lidar(lidar_d_rf))
 
@@ -566,7 +718,7 @@ class CARLA_Data(Dataset):
             # 1:Shelter; 2:noise; 3:Information all black(Loss of frames); 4:Brightness and contrast; 5:Frame overlap; 6:Semantic attacks
             # 7:Repeat frame; 8:Fan lost(5 degree); 9:Multi-sensor desynchronization (homogeneous desynchronization); 
             # 10:Multi-sensor desynchronization (heterogeneous desynchronization)
-            att_type = np.random.randint(1, 7)
+            att_type = np.random.randint(1, 11)
             # att_type = 1
 
             if att_type == 0:
@@ -624,36 +776,63 @@ class CARLA_Data(Dataset):
                 img_att5_show = cv2.cvtColor(img_att5_show, cv2.COLOR_BGR2RGB)
                 img_att6_show = cv2.cvtColor(img_att6_show, cv2.COLOR_BGR2RGB)
 
-                cv2.imshow('img_att_show', img_orl_show)
-                cv2.imshow('lidar_orl_show', lidar_orl_show)
-                cv2.imshow('img_att1_show', img_att1_show)
-                cv2.imshow('lidar_att1_show', lidar_att1_show)
-                cv2.imshow('img_att2_show', img_att2_show)
-                cv2.imshow('lidar_att2_show', lidar_att2_show)
-                cv2.imshow('img_att3_show', img_att3_show)
-                cv2.imshow('lidar_att3_show', lidar_att3_show)
-                cv2.imshow('img_att4_show', img_att4_show)
-                cv2.imshow('lidar_att4_show', lidar_att4_show)
-                cv2.imshow('img_att5_show', img_att5_show)
-                cv2.imshow('lidar_att5_show', lidar_att5_show)
-                cv2.imshow('img_att6_show', img_att6_show)
-                cv2.imshow('lidar_att6_show', lidar_att6_show)
-                cv2.waitKey(10)
-                time.sleep(600)
+                # cv2.imshow('img_att_show', img_orl_show)
+                # cv2.imshow('lidar_orl_show', lidar_orl_show)
+                # cv2.imshow('img_att1_show', img_att1_show)
+                # cv2.imshow('lidar_att1_show', lidar_att1_show)
+                # cv2.imshow('img_att2_show', img_att2_show)
+                # cv2.imshow('lidar_att2_show', lidar_att2_show)
+                # cv2.imshow('img_att3_show', img_att3_show)
+                # cv2.imshow('lidar_att3_show', lidar_att3_show)
+                # cv2.imshow('img_att4_show', img_att4_show)
+                # cv2.imshow('lidar_att4_show', lidar_att4_show)
+                # cv2.imshow('img_att5_show', img_att5_show)
+                # cv2.imshow('lidar_att5_show', lidar_att5_show)
+                # cv2.imshow('img_att6_show', img_att6_show)
+                # cv2.imshow('lidar_att6_show', lidar_att6_show)
+                # cv2.waitKey(10)
+                # time.sleep(600)
 
             if att_type == 1:
                 img_att = data_new['imgs_att'][att_t*8 + att_shijiao]
-                img_att[:, 32:, 32:96] = 0
+                #######################
+                # shelter with random size and pos
+                ######################3
+                self.s1_x=random.randint(5,11)
+                self.s1_y=random.randint(5,11)
+                x_min = np.random.randint(0, int(128 - 9.6 * self.s1_x))
+                y_min = np.random.randint(0, 128 - int(5.4 * self.s1_y))
+                x_max = x_min + int(9.6 * self.s1_x)
+                y_max = y_min + int(5.4 * self.s1_y)
+                self.x1 = x_min / 128
+                self.y1 = y_min / 128
+                #print(img_att.size())
+                img_att[:, x_min:x_max, y_min:y_max] = 0
                 data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att
 
                 # att lidar
                 lidar_att_zhedang = data_new['lidars_att'][att_t * 8 + att_shijiao]
-                lidar_att_zhedang[:, 16:, 30:90] = 0
+                #print(lidar_att_zhedang.size())
+                x_min=int(self.x1*64)
+                y_min=int(self.y1*122)
+                x_max=int(self.x1*64+4.8*self.s1_x)
+                y_max=int(self.y1*122+5.4*self.s1_y)
+                lidar_att_zhedang[:, x_min:x_max, y_min:y_max] = 0
                 data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang
 
+                # #test
+                # img1=tensor2PIL(lidar_att_zhedang)
+                # img2=tensor2PIL(img_att)
+                # #print(type(img))
+                # plt.figure()
+                # plt.subplot(2,1,1)
+                # plt.imshow(img1)
+                # plt.subplot(2,1,2)
+                # plt.imshow(img2)
+                # plt.show()
 
             if att_type == 2:
-                Attack_intensity = random.uniform(0.35, 0.45)
+                Attack_intensity = random.uniform(0.25, 0.45)
                 # att img
                 img_att = data_new['imgs_att'][att_t*8 + att_shijiao]
                 img_att = sp_noise(img_att, Attack_intensity)
@@ -676,52 +855,96 @@ class CARLA_Data(Dataset):
 
             if att_type == 4:
                 # att img
+                level=random.randint(5,11)
+                a=0.2*level
+                b=0.05*level
                 img_att = data_new['imgs_att'][att_t*8 + att_shijiao]
-                img_att = bright_contrast(1.5, 0.5, img_att)
+                img_att = bright_contrast(a, b, img_att)
                 data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att
 
-                # att lidar
-                lidar_att_zhedang = data_new['lidars_att'][att_t * 8 + att_shijiao]
-                lidar_att_zhedang = bright_contrast(1.5, 0.5, lidar_att_zhedang)
-                data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang
+
+                # # att lidar
+                # lidar_att_zhedang = data_new['lidars_att'][att_t * 8 + att_shijiao]
+                # lidar_att_zhedang = bright_contrast(1.5, 0.5, lidar_att_zhedang)
+                # data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang
+
+                # img1=tensor2PIL(lidar_att_zhedang)
+                # img2=tensor2PIL(img_att)
+                # #print(type(img))
+                # plt.figure()
+                # plt.subplot(2,1,1)
+                # plt.imshow(img1)
+                # plt.subplot(2,1,2)
+                # plt.imshow(img2)
+                # plt.show()
+
+            # if att_type == 5 and self.data_new_last is not None:
+            #     if att_t==0:
+            #         # att img
+            #         img_att_t0 = data_new['imgs_att'][att_t*8 + att_shijiao]
+            #         img_att_t1 = self.data_new_last['imgs_att'][(att_t+1)*8 + att_shijiao]
+            #         img_att_t0 = (img_att_t0 + img_att_t1)/2
+            #         data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att_t0
+
+            #         # att lidar
+            #         lidar_att_zhedang_t0 = data_new['lidars_att'][att_t * 8 + att_shijiao]
+            #         lidar_att_zhedang_t1 = self.data_new_last['lidars_att'][(att_t+1) * 8 + att_shijiao]
+            #         lidar_att_zhedang_t0 = (lidar_att_zhedang_t0 + lidar_att_zhedang_t1)/2
+            #         data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang_t0
+            #     else:
+            #         # att img
+            #         img_att_t = data_new['imgs_att'][att_t*8 + att_shijiao]
+            #         img_att_t_1 = self.data_new_last['imgs_att'][(att_t-1)*8 + att_shijiao]
+            #         img_att_t = (img_att_t + img_att_t_1)/2
+            #         data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att_t
+
+            #         # att lidar
+            #         lidar_att_zhedang_t = data_new['lidars_att'][att_t * 8 + att_shijiao]
+            #         lidar_att_zhedang_t_1 = self.data_new_last['lidars_att'][(att_t-1) * 8 + att_shijiao]
+            #         lidar_att_zhedang_t = (lidar_att_zhedang_t + lidar_att_zhedang_t_1)/2
+            #         data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang_t
+
 
             if att_type == 5:
-                if att_t==0:
-                    # att img
-                    img_att_t0 = data_new['imgs_att'][att_t*8 + att_shijiao]
-                    img_att_t1 = data_new['imgs_att'][(att_t+1)*8 + att_shijiao]
-                    img_att_t0 = (img_att_t0 + img_att_t1)/2
-                    data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att_t0
+                # att img
+                img_att_t = data_new['imgs_att'][att_t*8 + att_shijiao]
+                img_att_t_his = data_new['imgs_his'][att_shijiao]
+                img_att_t = (img_att_t + img_att_t_his)/2
+                data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att_t
 
-                    # att lidar
-                    lidar_att_zhedang_t0 = data_new['lidars_att'][att_t * 8 + att_shijiao]
-                    lidar_att_zhedang_t1 = data_new['lidars_att'][(att_t+1) * 8 + att_shijiao]
-                    lidar_att_zhedang_t0 = (lidar_att_zhedang_t0 + lidar_att_zhedang_t1)/2
-                    data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang_t0
-                else:
-                    # att img
-                    img_att_t = data_new['imgs_att'][att_t*8 + att_shijiao]
-                    img_att_t_1 = data_new['imgs_att'][(att_t-1)*8 + att_shijiao]
-                    img_att_t = (img_att_t + img_att_t_1)/2
-                    data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att_t
+                # att lidar
+                lidar_att_zhedang_t = data_new['lidars_att'][att_t * 8 + att_shijiao]
+                lidar_att_zhedang_t_his = data_new['lidars_his'][att_shijiao]
+                lidar_att_zhedang_t = (lidar_att_zhedang_t + lidar_att_zhedang_t_his)/2
+                data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang_t
 
-                    # att lidar
-                    lidar_att_zhedang_t = data_new['lidars_att'][att_t * 8 + att_shijiao]
-                    lidar_att_zhedang_t_1 = data_new['lidars_att'][(att_t-1) * 8 + att_shijiao]
-                    lidar_att_zhedang_t = (lidar_att_zhedang_t + lidar_att_zhedang_t_1)/2
-                    data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang_t
 
             if att_type == 6:
                 # att img
                 img_att_ori = data_new['imgs_clean_ori'][att_t*8 + att_shijiao]
-                img_att_ori = attack.att_img_semantic(img_att_ori, 8, 3)
+                l_r=np.random.randint(0,7)
+                x=np.random.randint(5,11)
+                img_att_ori = attack.att_img_semantic(img_att_ori, x, l_r)
                 data_new['imgs_att'][att_t * 8 + att_shijiao] = transform_img(Image.fromarray(np.uint8(img_att_ori*255)))
 
                 # att lidar
                 lidar_att = data_new['lidars_att'][att_t * 8 + att_shijiao]
-                lidar_att = attack.att_lidar_semantic(lidar_att, 8, 3)
+                lidar_att = attack.att_lidar_semantic(lidar_att, x, l_r)
                 data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att
 
+                # # #print(img_att_ori)
+                # img1 = Image.fromarray(np.uint8(img_att_ori*255))
+                # #print(type(lidar_att))
+                # # img2=Image.fromarray(np.uint8(lidar_att*255))
+                # # img1=tensor2PIL(lidar_att)
+                # img2=tensor2PIL(lidar_att)
+                # #print(type(img))
+                # plt.figure()
+                # plt.subplot(2,1,1)
+                # plt.imshow(img1)
+                # plt.subplot(2,1,2)
+                # plt.imshow(img2)
+                # plt.show()
 
             if att_type == 7:
                 if att_t==0:
@@ -755,54 +978,66 @@ class CARLA_Data(Dataset):
             if att_type == 8:
                 # att img
                 img_att = data_new['imgs_att'][att_t*8 + att_shijiao]
-                img_att[:, :, 60:68] = 0
+                level=np.random.randint(5,11)
+                left=np.random.randint(6,128-3*level)
+                img_att[:, :, left:left+3*level] = 0
                 data_new['imgs_att'][att_t * 8 + att_shijiao] = img_att
 
                 # att lidar
                 lidar_att_zhedang = data_new['lidars_att'][att_t * 8 + att_shijiao]
-                lidar_att_zhedang[:, :, 58:64] = 0
+                lidar_att_zhedang[:, :, left-6:left-6+3*level] = 0
                 data_new['lidars_att'][att_t * 8 + att_shijiao] = lidar_att_zhedang
 
-            if att_type == 9:
+                # img1=tensor2PIL(lidar_att_zhedang)
+                # img2=tensor2PIL(img_att)
+                # #print(type(img))
+                # plt.figure()
+                # plt.subplot(2,1,1)
+                # plt.imshow(img1)
+                # plt.subplot(2,1,2)
+                # plt.imshow(img2)
+                # plt.show()
+
+            if att_type == 9 and self.data_new_last is not None:
                 att_sensor = np.random.randint(1, 3)
                 if att_sensor == 1:
                     # att img
-                    data_new['imgs_att'][(att_t+2)*8 + att_shijiao] = data_new_last['imgs_att'][(att_t+1)*8 + att_shijiao]
-                    data_new['imgs_att'][(att_t+1)*8 + att_shijiao] = data_new_last['imgs_att'][att_t*8 + att_shijiao]
-                    data_new['imgs_att'][att_t*8 + att_shijiao] = data_new_last['imgs_att'][att_t*8 + att_shijiao]
+                    data_new['imgs_att'][(att_t+2)*8 + att_shijiao] = self.data_new_last['imgs_att'][(att_t+1)*8 + att_shijiao]
+                    data_new['imgs_att'][(att_t+1)*8 + att_shijiao] = self.data_new_last['imgs_att'][att_t*8 + att_shijiao]
+                    data_new['imgs_att'][att_t*8 + att_shijiao] = self.data_new_last['imgs_att'][att_t*8 + att_shijiao]
 
-                    data_new['imgs_att'][(att_t+2)*8 + att_shijiao+1] = data_new_last['imgs_att'][(att_t+1)*8 + att_shijiao+1]
-                    data_new['imgs_att'][(att_t+1)*8 + att_shijiao+1] = data_new_last['imgs_att'][att_t*8 + att_shijiao+1]
-                    data_new['imgs_att'][att_t*8 + att_shijiao+1] = data_new_last['imgs_att'][att_t*8 + att_shijiao+1]
+                    data_new['imgs_att'][(att_t+2)*8 + att_shijiao+1] = self.data_new_last['imgs_att'][(att_t+1)*8 + att_shijiao+1]
+                    data_new['imgs_att'][(att_t+1)*8 + att_shijiao+1] = self.data_new_last['imgs_att'][att_t*8 + att_shijiao+1]
+                    data_new['imgs_att'][att_t*8 + att_shijiao+1] = self.data_new_last['imgs_att'][att_t*8 + att_shijiao+1]
                 else:
                     # att lidar
-                    data_new['lidars_att'][(att_t+2)*8 + att_shijiao] = data_new_last['lidars_att'][(att_t+1)*8 + att_shijiao]
-                    data_new['lidars_att'][(att_t+1)*8 + att_shijiao] = data_new_last['lidars_att'][att_t*8 + att_shijiao]
-                    data_new['lidars_att'][att_t*8 + att_shijiao] = data_new_last['lidars_att'][att_t*8 + att_shijiao]
+                    data_new['lidars_att'][(att_t+2)*8 + att_shijiao] = self.data_new_last['lidars_att'][(att_t+1)*8 + att_shijiao]
+                    data_new['lidars_att'][(att_t+1)*8 + att_shijiao] = self.data_new_last['lidars_att'][att_t*8 + att_shijiao]
+                    data_new['lidars_att'][att_t*8 + att_shijiao] = self.data_new_last['lidars_att'][att_t*8 + att_shijiao]
 
-                    data_new['lidars_att'][(att_t+2)*8 + att_shijiao+1] = data_new_last['lidars_att'][(att_t+1)*8 + att_shijiao+1]
-                    data_new['lidars_att'][(att_t+1)*8 + att_shijiao+1] = data_new_last['lidars_att'][att_t*8 + att_shijiao+1]
-                    data_new['lidars_att'][att_t*8 + att_shijiao+1] = data_new_last['lidars_att'][att_t*8 + att_shijiao+1]
+                    data_new['lidars_att'][(att_t+2)*8 + att_shijiao+1] = self.data_new_last['lidars_att'][(att_t+1)*8 + att_shijiao+1]
+                    data_new['lidars_att'][(att_t+1)*8 + att_shijiao+1] = self.data_new_last['lidars_att'][att_t*8 + att_shijiao+1]
+                    data_new['lidars_att'][att_t*8 + att_shijiao+1] = self.data_new_last['lidars_att'][att_t*8 + att_shijiao+1]
                 
                 break
 
 
-            if att_type == 10:
+            if att_type == 10 and self.data_new_last is not None:
                 att_sensor = np.random.randint(1, 3)
                 if att_sensor == 1:
                     # att img
-                    data_new['imgs_att'][16:24] = data_new_last['imgs_att'][8:16]
-                    data_new['imgs_att'][8:16] = data_new_last['imgs_att'][0:8]
-                    data_new['imgs_att'][0:8] = data_new_last['imgs_att'][16:24]
+                    data_new['imgs_att'][16:24] = self.data_new_last['imgs_att'][8:16]
+                    data_new['imgs_att'][8:16] = self.data_new_last['imgs_att'][0:8]
+                    data_new['imgs_att'][0:8] = self.data_new_last['imgs_att'][16:24]
                 else:
                     # att lidar
-                    data_new['lidars_att'][16:24] = data_new_last['lidars_att'][8:16]
-                    data_new['lidars_att'][8:16] = data_new_last['lidars_att'][0:8]
-                    data_new['lidars_att'][0:8] = data_new_last['lidars_att'][16:24]
+                    data_new['lidars_att'][16:24] = self.data_new_last['lidars_att'][8:16]
+                    data_new['lidars_att'][8:16] = self.data_new_last['lidars_att'][0:8]
+                    data_new['lidars_att'][0:8] = self.data_new_last['lidars_att'][16:24]
                 break
 
 
-        data_new_last = copy.deepcopy(data_new)
+        self.data_new_last = copy.deepcopy(data_new)
 
         data_new['att_nodes'] = self.choice_nodes
 

@@ -172,7 +172,7 @@ class CARLA_Data(Dataset):
     def __init__(self, root_path,batch_size):
         self.batch_size = batch_size
 
-        self.data_new_last = None
+        # self.data_new_last = None
         # self.choice_nodes = random.sample(range(0, 24), 6)
         # self.rand()
         self.fan_mat=Sector(47.2,5)
@@ -998,46 +998,34 @@ class CARLA_Data(Dataset):
                 # plt.imshow(img2)
                 # plt.show()
 
-            if att_type == 9 and self.data_new_last is not None:
+            if att_type == 9 and att_t>0 and 0<att_shijiao<7:
                 att_sensor = np.random.randint(1, 3)
                 if att_sensor == 1:
                     # att img
-                    data_new['imgs_att'][(att_t+2)*8 + att_shijiao] = self.data_new_last['imgs_att'][(att_t+1)*8 + att_shijiao]
-                    data_new['imgs_att'][(att_t+1)*8 + att_shijiao] = self.data_new_last['imgs_att'][att_t*8 + att_shijiao]
-                    data_new['imgs_att'][att_t*8 + att_shijiao] = self.data_new_last['imgs_att'][att_t*8 + att_shijiao]
-
-                    data_new['imgs_att'][(att_t+2)*8 + att_shijiao+1] = self.data_new_last['imgs_att'][(att_t+1)*8 + att_shijiao+1]
-                    data_new['imgs_att'][(att_t+1)*8 + att_shijiao+1] = self.data_new_last['imgs_att'][att_t*8 + att_shijiao+1]
-                    data_new['imgs_att'][att_t*8 + att_shijiao+1] = self.data_new_last['imgs_att'][att_t*8 + att_shijiao+1]
+                    data_new['imgs_att'][att_t*8 + att_shijiao] = data_new['imgs_att'][(att_t-1)*8 + att_shijiao]
+                    data_new['imgs_att'][att_t*8 + att_shijiao-1] = data_new['imgs_att'][(att_t-1)*8 + att_shijiao-1]
+                    data_new['imgs_att'][att_t*8 + att_shijiao+1] = data_new['imgs_att'][(att_t-1)*8 + att_shijiao+1]
                 else:
                     # att lidar
-                    data_new['lidars_att'][(att_t+2)*8 + att_shijiao] = self.data_new_last['lidars_att'][(att_t+1)*8 + att_shijiao]
-                    data_new['lidars_att'][(att_t+1)*8 + att_shijiao] = self.data_new_last['lidars_att'][att_t*8 + att_shijiao]
-                    data_new['lidars_att'][att_t*8 + att_shijiao] = self.data_new_last['lidars_att'][att_t*8 + att_shijiao]
-
-                    data_new['lidars_att'][(att_t+2)*8 + att_shijiao+1] = self.data_new_last['lidars_att'][(att_t+1)*8 + att_shijiao+1]
-                    data_new['lidars_att'][(att_t+1)*8 + att_shijiao+1] = self.data_new_last['lidars_att'][att_t*8 + att_shijiao+1]
-                    data_new['lidars_att'][att_t*8 + att_shijiao+1] = self.data_new_last['lidars_att'][att_t*8 + att_shijiao+1]
-                
+                    data_new['lidars_att'][att_t*8 + att_shijiao] = data_new['lidars_att'][(att_t-1)*8 + att_shijiao]
+                    data_new['lidars_att'][att_t*8 + att_shijiao-1] = data_new['lidars_att'][(att_t-1)*8 + att_shijiao-1]
+                    data_new['lidars_att'][att_t*8 + att_shijiao+1] = data_new['lidars_att'][(att_t-1)*8 + att_shijiao+1]
                 break
 
-
-            if att_type == 10 and self.data_new_last is not None:
+            if att_type == 10:
                 att_sensor = np.random.randint(1, 3)
                 if att_sensor == 1:
                     # att img
-                    data_new['imgs_att'][16:24] = self.data_new_last['imgs_att'][8:16]
-                    data_new['imgs_att'][8:16] = self.data_new_last['imgs_att'][0:8]
-                    data_new['imgs_att'][0:8] = self.data_new_last['imgs_att'][16:24]
+                    data_new['imgs_att'][16:24] = data_new['imgs_att'][8:16]
+                    data_new['imgs_att'][8:16] = data_new['imgs_att'][0:8]
                 else:
                     # att lidar
-                    data_new['lidars_att'][16:24] = self.data_new_last['lidars_att'][8:16]
-                    data_new['lidars_att'][8:16] = self.data_new_last['lidars_att'][0:8]
-                    data_new['lidars_att'][0:8] = self.data_new_last['lidars_att'][16:24]
+                    data_new['lidars_att'][16:24] = data_new['lidars_att'][8:16]
+                    data_new['lidars_att'][8:16] = data_new['lidars_att'][0:8]
                 break
 
 
-        self.data_new_last = copy.deepcopy(data_new)
+        # self.data_new_last = copy.deepcopy(data_new)
 
         data_new['att_nodes'] = self.choice_nodes
 

@@ -13,8 +13,7 @@ import torch.nn.functional as F
 
 from tqdm import tqdm
 from PIL import Image
-from PIL import Image
-from torch.utils.tensorboard import SummaryWriter
+# from torch.utils.tensorboard import SummaryWriter
 
 from data_load import CARLA_Data
 from model_net.model_net import model_all
@@ -29,8 +28,8 @@ if __name__ == '__main__':
     lr = 0.00001
     device = 'cuda:0'
 
-    loss_writer = './log_model_' + str(train_model) + '/0901'
-    writer = SummaryWriter(log_dir=loss_writer)
+    # loss_writer = './log_model_' + str(train_model) + '/0901'
+    # writer = SummaryWriter(log_dir=loss_writer)
 
     train_data = ['',
                   '',
@@ -62,10 +61,6 @@ if __name__ == '__main__':
     model_all = model_all(train_model=train_model).to(device)
 
     model_all.model_vae.load_state_dict(torch.load('./Pre-trained_models/', map_location=device))
-    # model_all.model_adj_rec.load_state_dict(torch.load('./Pre-trained_models/'))
-    # model_all.model_feature_rec.load_state_dict(torch.load('./Pre-trained_models/'))
-    # model_all.model_nav.load_state_dict(torch.load('./Pre-trained_models/'))
-
     model_all.load_state_dict(torch.load('./trained_models_/'))
 
     # for p in model_all.model_vae_fixed_parameters.parameters():
@@ -80,10 +75,20 @@ if __name__ == '__main__':
 
     step = 0
 
+    total_loss=[]
+    total_loss_1=[]
+    total_loss_2=[]
+    each_num=[]
+    save_path='./results/model_/'
+
     for epoch in range(100):
+        writer_loss=[]
+        writer_loss_1=[]
+        writer_loss_2=[]
+        num=0
         for i, data in enumerate(tqdm(dataloader_train), 0):
             step = step + 1
-
+            num+=1
             train_data.rand()
             node_attack = np.array([data['att_nodes'][xxx][0] for xxx in range(8)])
 
@@ -115,8 +120,8 @@ if __name__ == '__main__':
                 # loss_e = torch.exp((- e_clean + e_att) / 24)
                 # loss_adj_rec = loss_c + loss_e
 
-                # # feature rec loss
-                # loss_feature_rec = criterion(features_rec, model_all.vae_feature_label).to(device, dtype=torch.float32)
+                # feature rec loss
+                loss_feature_rec = criterion(features_rec, model_all.vae_feature_label).to(device, dtype=torch.float32)
 
                 # model nav loss
                 gt_waypoints = [torch.stack(data['waypoints'][i], dim=1).to(device, dtype=torch.float32) for i in
@@ -128,13 +133,17 @@ if __name__ == '__main__':
 
                 # model all loss
                 # loss = loss_vae + loss_adj_rec + loss_feature_rec
-                loss = loss_nav
+                loss = loss_nav + loss_feature_rec
                 # print('loss_vae: ', loss_vae)
                 # print('loss_adj_rec: ', loss_adj_rec)
                 # print('loss_feature_rec: ', loss_feature_rec)
-                print('epoch: ', epoch, 'loss: ', loss)
+                print('epoch: ', epoch, 'loss: ', loss, 'loss_feature_rec: ', loss_feature_rec)
 
-                writer.add_scalar('train_model_0/loss', loss, step)
+                writer_loss.append(loss.item())
+                writer_loss_1.append(loss_nav.item())
+                writer_loss_2.append(loss_feature_rec.item())
+
+                # writer.add_scalar('train_model_0/loss', loss, step)
                 # writer.add_scalar('train_model_0/loss_vae', loss_vae, step)
                 # writer.add_scalar('train_model_0/loss_adj_rec', loss_adj_rec, step)
                 # writer.add_scalar('train_model_0/loss_feature_rec', loss_feature_rec, step)
@@ -173,10 +182,13 @@ if __name__ == '__main__':
 
                 loss = loss_adj_rec
                 print('epoch: ', epoch, 'loss: ', loss, 'loss_c: ', loss_c, 'loss_e: ', loss_e)
+                writer_loss.append(loss.item())
+                writer_loss_1.append(loss_c.item())
+                writer_loss_2.append(loss_e.item())
 
-                writer.add_scalar('train_model_1/loss', loss, step)
-                writer.add_scalar('train_model_1/loss_c', loss_c, step)
-                writer.add_scalar('train_model_1/loss_e', loss_e, step)
+                # writer.add_scalar('train_model_1/loss', loss, step)
+                # writer.add_scalar('train_model_1/loss_c', loss_c, step)
+                # writer.add_scalar('train_model_1/loss_e', loss_e, step)
 
                 loss.backward()
                 optimizer.step()
@@ -213,14 +225,49 @@ if __name__ == '__main__':
                 loss = loss_feature_rec
                 print('epoch: ', epoch, 'loss: ', loss)
 
-                writer.add_scalar('train_model_2/loss', loss, step)
+                writer_loss.append(loss.item())
+
+                # writer.add_scalar('train_model_2/loss', loss, step)
 
                 loss.backward()
                 optimizer.step()
 
+
+        total_loss.append(writer_loss)
+        total_loss_1.append(writer_loss_1)
+        total_loss_2.append(writer_loss_2)
+        each_num.append(num)
+        
+        filename_loss=save_path+'loss.txt'
+        filename_loss_1=save_path+'loss_1.txt'
+        filename_loss_2=save_path+'loss_2.txt'
+        with open(filename_loss, "a", encoding='utf-8') as file:
+            file.write(str(writer_loss)+'\n')
+            file.close()
+        with open(filename_loss_1, "a", encoding='utf-8') as file:
+            file.write(str(writer_loss_1)+'\n')
+            file.close()
+        with open(filename_loss_2, "a", encoding='utf-8') as file:
+            file.write(str(writer_loss_2)+'\n')
+            file.close()
+
+            
         torch.save(model_all.state_dict(), os.path.join('./trained_models_'+str(train_model), 'current_model.pth'))
         if epoch % 5 == 0:
             torch.save(model_all.state_dict(), os.path.join('./trained_models_'+str(train_model), str(0+epoch) + 'model.pth'))
 
-    writer.close()
+
+    f_loss=save_path+'total_loss.txt'
+    f_loss_1=save_path+'total_loss_1.txt'
+    f_loss_2=save_path+'total_loss_2.txt'
+    with open(f_loss, "w", encoding='utf-8') as file:
+            file.write(str(total_loss))
+            file.close()
+    with open(f_loss_1, "w", encoding='utf-8') as file:
+            file.write(str(total_loss_1))
+            file.close()
+    with open(f_loss_2, "w", encoding='utf-8') as file:
+            file.write(str(total_loss_2))
+            file.close()
+    # writer.close()
 

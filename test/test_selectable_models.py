@@ -13,8 +13,6 @@ import torch.nn.functional as F
 
 from tqdm import tqdm
 from PIL import Image
-from PIL import Image
-from torch.utils.tensorboard import SummaryWriter
 
 from train.data_load import CARLA_Data
 from model_net.model_net import model_all
@@ -66,7 +64,7 @@ if __name__ == '__main__':
 
     loss_model = [[], [], []]
 
-    for epoch in range(13):
+    for epoch in range(21):
         print('epoch: ', epoch)
         loss_test = [[], [], []]
         model_all.load_state_dict(torch.load(os.path.join('./trained_models_1', str(0 + epoch*5) + 'model.pth')))
@@ -103,8 +101,8 @@ if __name__ == '__main__':
                 # loss_e = torch.exp((- e_clean + e_att) / 24)
                 # loss_adj_rec = loss_c + loss_e
 
-                # # feature rec loss
-                # loss_feature_rec = criterion(features_rec, model_all.vae_feature_label).to(device, dtype=torch.float32)
+                # feature rec loss
+                loss_feature_rec = criterion(features_rec, model_all.vae_feature_label).to(device, dtype=torch.float32)
 
                 # model nav loss
                 gt_waypoints = [torch.stack(data['waypoints'][i], dim=1).to(device, dtype=torch.float32) for i in
@@ -115,8 +113,10 @@ if __name__ == '__main__':
                 # model all loss
                 # loss = loss_vae + loss_adj_rec + loss_feature_rec
 
-                loss = loss_nav
+                loss = loss_nav + loss_feature_rec
                 loss_test[0].append(loss.data)
+                loss_test[1].append(loss_nav.data)
+                loss_test[2].append(loss_feature_rec.data)
 
 
             if train_model==1:

@@ -164,19 +164,22 @@ class ADJ_rec(nn.Module):
         Wh1 = F.relu(self.fcv(h))
         q1 = F.relu(self.fcq(h))
         k1 = F.relu(self.fck(h)).permute(0, 2, 1)
-        # att1 = F.softmax(torch.mul(torch.bmm(q1, k1), adj) - 9e15 * (1 - adj), dim=2).to(torch.float32)
-        att1 = torch.sigmoid(torch.mul(torch.bmm(q1, k1), adj) - 9e15 * (1 - adj)).to(torch.float32)
+        att1 = F.softmax(torch.mul(torch.bmm(q1, k1), adj) - 9e15 * (1 - adj), dim=2).to(torch.float32)
+        # att1 = torch.sigmoid(torch.mul(torch.bmm(q1, k1), adj) - 9e15 * (1 - adj)).to(torch.float32)
         f1 = torch.bmm(att1, Wh1)
         f1 = self.fcout1(f1)
+
+        f_c = torch.clone(f1).detach()
+        out = F.softmax(self.finalMLP(f_c), dim=2)
 
         Wh2 = F.relu(self.fcv2(f1))
         q2 = F.relu(self.fcq2(f1))
         k2 = F.relu(self.fck2(f1)).permute(0, 2, 1)
-        # att2 = F.softmax(torch.mul(torch.bmm(q2, k2), adj) - 9e15 * (1 - adj), dim=2).to(torch.float32)
-        att2 = torch.sigmoid(torch.mul(torch.bmm(q2, k2), adj) - 9e15 * (1 - adj)).to(torch.float32)
+        att2 = F.softmax(torch.mul(torch.bmm(q2, k2), adj) - 9e15 * (1 - adj), dim=2).to(torch.float32)
+        # att2 = torch.sigmoid(torch.mul(torch.bmm(q2, k2), adj) - 9e15 * (1 - adj)).to(torch.float32)
         f2 = torch.bmm(att2, Wh2)
         f2 = self.fcout2(f2)
-        out = F.softmax(self.finalMLP(f2), dim=2)
+        # out = F.softmax(self.finalMLP(f2), dim=2)
         return out, att2
 
 
@@ -425,8 +428,12 @@ encoder = Encoder(128*128*3, 512, 256)
 decoder = Decoder(256, 512, 128*128*3)
 encoder1 = Encoder1(64*122, 512, 256)
 decoder1 = Decoder1(256, 512, 64*122)
+encoder_fix = Encoder(128*128*3, 512, 256)
+decoder_fix = Decoder(256, 512, 128*128*3)
+encoder1_fix = Encoder1(64*122, 512, 256)
+decoder1_fix = Decoder1(256, 512, 64*122)
 vae = VAE(encoder, decoder, encoder1, decoder1)
-vae_fixed_parameters = VAE(encoder, decoder, encoder1, decoder1).to(device)
+vae_fixed_parameters = VAE(encoder_fix, decoder_fix, encoder1_fix, decoder1_fix).to(device)
 vae_fixed_parameters.load_state_dict(torch.load('./Pre-trained_models/', map_location=device))
 
 adj_rec = ADJ_rec(in_features=256, mid_features1=512, hidden=256, mid_feature2=32,

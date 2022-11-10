@@ -163,7 +163,7 @@ if __name__ == '__main__':
                 A_labels = torch.stack([A_label for xxxx in range(model_all.batch)], dim=0)
                 e_clean = torch.sum(torch.mul(model_all.adj_rec, A_labels)) / 20
                 e_att = torch.sum(model_all.adj_rec[:, :, node_attack[0:4]]) / 4
-                loss_e = torch.exp((- e_clean + e_att) / 24)
+                loss_e = torch.exp((- e_clean + e_att) / 4)
                 loss_adj_rec = loss_c + loss_e
 
                 # # feature rec loss
@@ -252,9 +252,9 @@ if __name__ == '__main__':
             file.close()
 
             
-        torch.save(model_all.state_dict(), os.path.join('./trained_models_'+str(train_model), 'current_model.pth'))
+        torch.save(model_all.state_dict(), os.path.join('./trained_models', 'current_model.pth'))
         if epoch % 5 == 0:
-            torch.save(model_all.state_dict(), os.path.join('./trained_models_'+str(train_model), str(0+epoch) + 'model.pth'))
+            torch.save(model_all.state_dict(), os.path.join('./trained_models', str(0+epoch) + 'model.pth'))
 
 
     f_loss=save_path+'total_loss.txt'

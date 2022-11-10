@@ -156,7 +156,7 @@ class ADJ_rec(nn.Module):
         nn.init.xavier_uniform_(self.fck2.weight)  # 原来注释掉了
         self.fcq2 = nn.Linear(hidden, mid_feature2)
         nn.init.xavier_normal_(self.fcq2.weight)  # 原来注释掉了
-        self.fcout2 = nn.Linear(mid_feature2, out_features)
+        self.fcout2 = nn.Linear(mid_features1, out_features)
 
         self.finalMLP = nn.Linear(out_features, out_features)
 
@@ -167,18 +167,23 @@ class ADJ_rec(nn.Module):
         att1 = F.softmax(torch.mul(torch.bmm(q1, k1), adj) - 9e15 * (1 - adj), dim=2).to(torch.float32)
         # att1 = torch.sigmoid(torch.mul(torch.bmm(q1, k1), adj) - 9e15 * (1 - adj)).to(torch.float32)
         f1 = torch.bmm(att1, Wh1)
-        f1 = self.fcout1(f1)
+
 
         f_c = torch.clone(f1).detach()
+        f_c = self.fcout2(f_c)
         out = F.softmax(self.finalMLP(f_c), dim=2)
 
-        Wh2 = F.relu(self.fcv2(f1))
+
+        f1 = self.fcout1(f1)
+
+
+        # Wh2 = F.relu(self.fcv2(f1))
         q2 = F.relu(self.fcq2(f1))
         k2 = F.relu(self.fck2(f1)).permute(0, 2, 1)
         att2 = F.softmax(torch.mul(torch.bmm(q2, k2), adj) - 9e15 * (1 - adj), dim=2).to(torch.float32)
         # att2 = torch.sigmoid(torch.mul(torch.bmm(q2, k2), adj) - 9e15 * (1 - adj)).to(torch.float32)
-        f2 = torch.bmm(att2, Wh2)
-        f2 = self.fcout2(f2)
+        # f2 = torch.bmm(att2, Wh2)
+        # f2 = self.fcout2(f2)
         # out = F.softmax(self.finalMLP(f2), dim=2)
         return out, att2
 

@@ -23,7 +23,7 @@ transform_lidar = transforms.Compose([transforms.ToTensor()])
 class ATTACK():
 
     def __init__(self):
-        self.fore_image = np.array(Image.open('./others/car_att.png'))
+        self.fore_image = np.array(Image.open('./others/car_black_ps.png'))
 
     def att_img_semantic(self, base_image, x, l_r):
         fore_image = cv2.resize(self.fore_image, (200, 209))

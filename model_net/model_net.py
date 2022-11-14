@@ -429,15 +429,22 @@ class GlobalConfig():
     clip_delta = 0.25  # maximum change in speed input to logitudinal controller
 
 
-encoder = Encoder(128*128*3, 512, 256)
-decoder = Decoder(256, 512, 128*128*3)
-encoder1 = Encoder1(64*122, 512, 256)
-decoder1 = Decoder1(256, 512, 64*122)
+encoder_adj = Encoder(128*128*3, 512, 256)
+decoder_adj = Decoder(256, 512, 128*128*3)
+encoder1_adj = Encoder1(64*122, 512, 256)
+decoder1_adj = Decoder1(256, 512, 64*122)
+vae_adj = VAE(encoder_adj, decoder_adj, encoder1_adj, decoder1_adj)
+
+encoder_fea = Encoder(128*128*3, 512, 256)
+decoder_fea = Decoder(256, 512, 128*128*3)
+encoder1_fea = Encoder1(64*122, 512, 256)
+decoder1_fea = Decoder1(256, 512, 64*122)
+vae_fea = VAE(encoder_fea, decoder_fea, encoder1_fea, decoder1_fea)
+
 encoder_fix = Encoder(128*128*3, 512, 256)
 decoder_fix = Decoder(256, 512, 128*128*3)
 encoder1_fix = Encoder1(64*122, 512, 256)
 decoder1_fix = Decoder1(256, 512, 64*122)
-vae = VAE(encoder, decoder, encoder1, decoder1)
 vae_fixed_parameters = VAE(encoder_fix, decoder_fix, encoder1_fix, decoder1_fix).to(device)
 vae_fixed_parameters.load_state_dict(torch.load('./Pre-trained_models/', map_location=device))
 
@@ -456,8 +463,12 @@ class model_all(nn.Module):
     def __init__(self, train_model = 0): # 0:all; 1:model_adj_rec; 2:model_feature_rec;
         super(model_all, self).__init__()
         self.train_model = train_model
+
         # self.model_vae_fixed_parameters = vae_fixed_parameters
-        self.model_vae = vae
+
+        self.model_vae_adj = vae_adj
+        self.model_vae_fea = vae_fea
+
         self.model_adj_rec = adj_rec
         self.model_feature_rec = feature_rec
         self.model_nav = model_nav
@@ -478,14 +489,19 @@ class model_all(nn.Module):
             lidars_att_batch = torch.stack(data['lidars_att'], dim=0)  # 24 * 12 * 3 * 128 *128
             lidars_att_batch = lidars_att_batch.view(-1, 64 * 122).to(device)
 
-            vae_feature_att, _, _ = self.model_vae(imgs_att_batch, lidars_att_batch)
+            # fea rec vae
+            vae_feature_att, _, _ = self.model_vae_fea(imgs_att_batch, lidars_att_batch)
             vae_feature_att = vae_feature_att.view(24, -1, 256).permute(1, 0, 2)
 
-            self.batch = vae_feature_att.shape[0]
+            # adj rec vae
+            vae_feature_att_adj, _, _ = self.model_vae_adj(imgs_att_batch, lidars_att_batch)
+            vae_feature_att_adj = vae_feature_att_adj.view(24, -1, 256).permute(1, 0, 2)
 
-            self.node_class, self.adj_rec = self.model_adj_rec(vae_feature_att, A)
+            self.batch = vae_feature_att_adj.shape[0]
 
-            vae_feature_att0 = vae_feature_att.clone()
+            self.node_class, self.adj_rec = self.model_adj_rec(vae_feature_att_adj, A)
+
+            vae_feature_att0 = vae_feature_att_adj.clone()
 
             vae_feature_att0[:, 0:8, :] /= math.sqrt(3)
             vae_feature_att0[:, 8:16, :] /= 2
@@ -505,6 +521,7 @@ class model_all(nn.Module):
             S_adj[S_adj > 1] = 1
 
             features_rec = self.model_feature_rec(vae_feature_att, S_adj, vae_feature_att)
+            # features_rec = self.model_feature_rec(vae_feature_att, self.adj_rec.detach(), vae_feature_att)
 
             L = feature_smoothing_batch(S_adj)
             coeffient = torch.eye(24).unsqueeze(0).repeat(self.batch, 1, 1).to(device) + 2.5 * L
@@ -531,7 +548,7 @@ class model_all(nn.Module):
             lidars_att_batch = torch.stack(data['lidars_att'], dim=0)  # 24 * 12 * 3 * 128 *128
             lidars_att_batch = lidars_att_batch.view(-1, 64 * 122).to(device)
 
-            vae_feature_att, _, _ = self.model_vae(imgs_att_batch, lidars_att_batch)
+            vae_feature_att, _, _ = self.model_vae_adj(imgs_att_batch, lidars_att_batch)
             vae_feature_att = vae_feature_att.view(24, -1, 256).permute(1, 0, 2)
 
             self.batch = vae_feature_att.shape[0]
@@ -554,14 +571,19 @@ class model_all(nn.Module):
             lidars_att_batch = torch.stack(data['lidars_att'], dim=0)  # 24 * 12 * 3 * 128 *128
             lidars_att_batch = lidars_att_batch.view(-1, 64 * 122).to(device)
 
-            vae_feature_att, _, _ = self.model_vae(imgs_att_batch, lidars_att_batch)
+            # fea rec vae
+            vae_feature_att, _, _ = self.model_vae_fea(imgs_att_batch, lidars_att_batch)
             vae_feature_att = vae_feature_att.view(24, -1, 256).permute(1, 0, 2)
 
-            self.batch = vae_feature_att.shape[0]
+            # adj rec vae
+            vae_feature_att_adj, _, _ = self.model_vae_adj(imgs_att_batch, lidars_att_batch)
+            vae_feature_att_adj = vae_feature_att_adj.view(24, -1, 256).permute(1, 0, 2)
 
-            self.node_class, self.adj_rec = self.model_adj_rec(vae_feature_att, A)
+            self.batch = vae_feature_att_adj.shape[0]
 
-            vae_feature_att0 = vae_feature_att.clone()
+            self.node_class, self.adj_rec = self.model_adj_rec(vae_feature_att_adj, A)
+
+            vae_feature_att0 = vae_feature_att_adj.clone()
 
             vae_feature_att0[:, 0:8, :] /= math.sqrt(3)
             vae_feature_att0[:, 8:16, :] /= 2
@@ -581,6 +603,7 @@ class model_all(nn.Module):
             S_adj[S_adj > 1] = 1
 
             features_rec = self.model_feature_rec(vae_feature_att, S_adj, vae_feature_att)
+            # features_rec = self.model_feature_rec(vae_feature_att, self.adj_rec.detach(), vae_feature_att)
 
             return features_rec
 
@@ -590,14 +613,19 @@ class model_all(nn.Module):
             lidars_att_batch = torch.stack(data['lidars_clean'], dim=0).unsqueeze(1).type(torch.float32) # 24 * 12 * 3 * 64 *122
             lidars_att_batch = lidars_att_batch.view(-1, 64 * 122).to(device)
 
-            vae_feature_att, _, _ = self.model_vae(imgs_att_batch, lidars_att_batch)
+            # fea rec vae
+            vae_feature_att, _, _ = self.model_vae_fea(imgs_att_batch, lidars_att_batch)
             vae_feature_att = vae_feature_att.view(24, -1, 256).permute(1, 0, 2)
 
-            self.batch = vae_feature_att.shape[0]
+            # adj rec vae
+            vae_feature_att_adj, _, _ = self.model_vae_adj(imgs_att_batch, lidars_att_batch)
+            vae_feature_att_adj = vae_feature_att_adj.view(24, -1, 256).permute(1, 0, 2)
 
-            self.node_class, self.adj_rec = self.model_adj_rec(vae_feature_att, A)
+            self.batch = vae_feature_att_adj.shape[0]
 
-            vae_feature_att0 = vae_feature_att.clone()
+            self.node_class, self.adj_rec = self.model_adj_rec(vae_feature_att_adj, A)
+
+            vae_feature_att0 = vae_feature_att_adj.clone()
 
             vae_feature_att0[:, 0:8, :] /= math.sqrt(3)
             vae_feature_att0[:, 8:16, :] /= 2
@@ -617,6 +645,7 @@ class model_all(nn.Module):
             S_adj[S_adj > 1] = 1
 
             features_rec = self.model_feature_rec(vae_feature_att, S_adj, vae_feature_att)
+            # features_rec = self.model_feature_rec(vae_feature_att, self.adj_rec.detach(), vae_feature_att)
 
             # img_rec_att1 = vae_fixed_parameters.decoder_img(features_rec[0][16]).cpu().detach().numpy().reshape(3, 128, 128).transpose(1, 2, 0)
             # img_rec_att1 = cv2.cvtColor(img_rec_att1, cv2.COLOR_BGR2RGB)

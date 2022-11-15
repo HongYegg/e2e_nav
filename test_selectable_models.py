@@ -13,7 +13,6 @@ import torch.nn.functional as F
 
 from tqdm import tqdm
 from PIL import Image
-# from torch.utils.tensorboard import SummaryWriter
 
 from data_load import CARLA_Data
 from model_net.model_net import model_all
@@ -22,19 +21,13 @@ from model_net.model_net import model_all
 if __name__ == '__main__':
 
     # 0:all; 1:model_adj_rec; 2:model_feature_rec;
-    train_model = 0
+    train_model = 1
 
     batchsize = 24
     lr = 0.00001
     device = 'cuda:0'
 
-    # loss_writer = './log_model_' + str(train_model) + '/0901'
-    # writer = SummaryWriter(log_dir=loss_writer)
-
-    train_data = ['/home/dataset_ssd/dataset2/town02/town02_long',
-                  '/home/dataset_ssd/dataset2/town02/town02_short',
-                  '/home/dataset_ssd/dataset2/town03/town03_long',
-                  '/home/dataset_ssd/dataset2/town03/town03_short']
+    train_data = ['/home/dataset_ssd/dataset_test1']
 
     train_data = CARLA_Data(root_path=train_data, batch_size=batchsize)
     dataloader_train = torch.utils.data.DataLoader(train_data, batch_size=batchsize, shuffle=True, num_workers=18)
@@ -59,41 +52,23 @@ if __name__ == '__main__':
     A_orl = A_8
 
     model_all = model_all(train_model=train_model).to(device)
-
-    model_all.model_vae.load_state_dict(torch.load('./pre_models/', map_location=device))
-    model_all.load_state_dict(torch.load('./pre_models/'))
-
-    for p in model_all.model_adj_rec.parameters():
-        p.requires_grad = False
-
-    optimizer = optim.Adam(filter(lambda p: p.requires_grad, model_all.parameters()), lr=lr)
-
-    # for p in model_all.model_vae_fixed_parameters.parameters():
-    #     p.requires_grad = False
-
-    # optimizer = optim.Adam(filter(lambda p: p.requires_grad, model_all.parameters()), lr=lr)
-    # optimizer = optim.Adam(model_all.parameters(), lr=lr)
-    model_all.train()
+    model_all.eval()
 
     # criterion_vae = torch.nn.MSELoss(reduction='sum')
     criterion = torch.nn.MSELoss()
 
     step = 0
 
-    total_loss=[]
-    total_loss_1=[]
-    total_loss_2=[]
-    each_num=[]
-    save_path='./model/'
+    loss_model = [[], [], []]
 
-    for epoch in range(100):
-        writer_loss=[]
-        writer_loss_1=[]
-        writer_loss_2=[]
-        num=0
+    for epoch in range(21):
+        print('epoch: ', epoch)
+        loss_test = [[], [], []]
+        model_all.load_state_dict(torch.load(os.path.join('./trained_models_1', str(0 + epoch*5) + 'model.pth')))
+
         for i, data in enumerate(tqdm(dataloader_train), 0):
             step = step + 1
-            num+=1
+
             train_data.rand()
             node_attack = np.array([data['att_nodes'][xxx][0] for xxx in range(8)])
 
@@ -107,8 +82,6 @@ if __name__ == '__main__':
             class_label[0:4, 0] = 0
             class_label[0:4, 1] = 1
             class_label = torch.tensor(class_label).to(device)
-
-            optimizer.zero_grad()
 
             if train_model==0:
                 features_rec, pred_wp = model_all(data, A)
@@ -134,27 +107,14 @@ if __name__ == '__main__':
                 gt_waypoints = torch.stack(gt_waypoints, dim=1).to(device, dtype=torch.float32)
                 loss_nav = F.l1_loss(pred_wp, gt_waypoints, reduction='none').mean()
 
-
-
                 # model all loss
                 # loss = loss_vae + loss_adj_rec + loss_feature_rec
+
                 loss = loss_nav + loss_feature_rec
-                # print('loss_vae: ', loss_vae)
-                # print('loss_adj_rec: ', loss_adj_rec)
-                # print('loss_feature_rec: ', loss_feature_rec)
-                print('epoch: ', epoch, 'loss: ', loss, 'loss_feature_rec: ', loss_feature_rec)
+                loss_test[0].append(loss.data)
+                loss_test[1].append(loss_nav.data)
+                loss_test[2].append(loss_feature_rec.data)
 
-                writer_loss.append(loss.item())
-                writer_loss_1.append(loss_nav.item())
-                writer_loss_2.append(loss_feature_rec.item())
-
-                # writer.add_scalar('train_model_0/loss', loss, step)
-                # writer.add_scalar('train_model_0/loss_vae', loss_vae, step)
-                # writer.add_scalar('train_model_0/loss_adj_rec', loss_adj_rec, step)
-                # writer.add_scalar('train_model_0/loss_feature_rec', loss_feature_rec, step)
-
-                loss.backward()
-                optimizer.step()
 
             if train_model==1:
                 _, _ = model_all(data, A)
@@ -186,17 +146,11 @@ if __name__ == '__main__':
                 # loss = loss_vae + loss_adj_rec + loss_feature_rec
 
                 loss = loss_adj_rec
-                print('epoch: ', epoch, 'loss: ', loss, 'loss_c: ', loss_c, 'loss_e: ', loss_e)
-                writer_loss.append(loss.item())
-                writer_loss_1.append(loss_c.item())
-                writer_loss_2.append(loss_e.item())
 
-                # writer.add_scalar('train_model_1/loss', loss, step)
-                # writer.add_scalar('train_model_1/loss_c', loss_c, step)
-                # writer.add_scalar('train_model_1/loss_e', loss_e, step)
+                loss_test[0].append(loss.data)
+                loss_test[1].append(loss_c.data)
+                loss_test[2].append(loss_e.data)
 
-                loss.backward()
-                optimizer.step()
 
             if train_model==2:
                 features_rec = model_all(data, A)
@@ -228,51 +182,14 @@ if __name__ == '__main__':
                 # loss = loss_vae + loss_adj_rec + loss_feature_rec
 
                 loss = loss_feature_rec
-                print('epoch: ', epoch, 'loss: ', loss)
 
-                writer_loss.append(loss.item())
-
-                # writer.add_scalar('train_model_2/loss', loss, step)
-
-                loss.backward()
-                optimizer.step()
+                loss_test[0].append(loss.data)
 
 
-        total_loss.append(writer_loss)
-        total_loss_1.append(writer_loss_1)
-        total_loss_2.append(writer_loss_2)
-        each_num.append(num)
-        
-        filename_loss=save_path+'loss.txt'
-        filename_loss_1=save_path+'loss_1.txt'
-        filename_loss_2=save_path+'loss_2.txt'
-        with open(filename_loss, "a", encoding='utf-8') as file:
-            file.write(str(writer_loss)+'\n')
-            file.close()
-        with open(filename_loss_1, "a", encoding='utf-8') as file:
-            file.write(str(writer_loss_1)+'\n')
-            file.close()
-        with open(filename_loss_2, "a", encoding='utf-8') as file:
-            file.write(str(writer_loss_2)+'\n')
-            file.close()
-
-            
-        torch.save(model_all.state_dict(), os.path.join('./model', 'current_model.pth'))
-        if epoch % 5 == 0:
-            torch.save(model_all.state_dict(), os.path.join('./model', str(0+epoch) + 'model.pth'))
-
-
-    f_loss=save_path+'total_loss.txt'
-    f_loss_1=save_path+'total_loss_1.txt'
-    f_loss_2=save_path+'total_loss_2.txt'
-    with open(f_loss, "w", encoding='utf-8') as file:
-            file.write(str(total_loss))
-            file.close()
-    with open(f_loss_1, "w", encoding='utf-8') as file:
-            file.write(str(total_loss_1))
-            file.close()
-    with open(f_loss_2, "w", encoding='utf-8') as file:
-            file.write(str(total_loss_2))
-            file.close()
-    # writer.close()
+        loss_model[0].append(torch.mean(torch.tensor(loss_test[0])))
+        print('loss_model: ', loss_model[0])
+        loss_model[1].append(torch.mean(torch.tensor(loss_test[1])))
+        print('loss_c: ', loss_model[1])
+        loss_model[2].append(torch.mean(torch.tensor(loss_test[2])))
+        print('loss_e: ', loss_model[2])
 

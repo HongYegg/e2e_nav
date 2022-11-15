@@ -446,7 +446,8 @@ decoder_fix = Decoder(256, 512, 128*128*3)
 encoder1_fix = Encoder1(64*122, 512, 256)
 decoder1_fix = Decoder1(256, 512, 64*122)
 vae_fixed_parameters = VAE(encoder_fix, decoder_fix, encoder1_fix, decoder1_fix).to(device)
-vae_fixed_parameters.load_state_dict(torch.load('./Pre-trained_models/', map_location=device))
+vae_fixed_parameters.load_state_dict(torch.load('/home/nav_model6/pre_models/net_dict_1100', map_location=device))
+vae_fixed_parameters.eval()
 
 adj_rec = ADJ_rec(in_features=256, mid_features1=512, hidden=256, mid_feature2=32,
                   out_features=2, dropout=0, alpha=0.2, concat=False)
@@ -558,6 +559,8 @@ class model_all(nn.Module):
             return self.node_class, self.adj_rec
 
         if self.train_model==2:
+            self.model_adj_rec.eval()
+            self.model_vae_adj.eval()
             imgs_clean_batch = torch.stack(data['imgs_clean'], dim=0)  # 24 * 12 * 3 * 128 *128
             self.imgs_clean_batch = imgs_clean_batch.view(-1, 3 * 128 * 128).to(device)
             lidars_clean_batch = torch.stack(data['lidars_clean'], dim=0)  # 24 * 12 * 3 * 128 *128

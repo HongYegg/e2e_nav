@@ -14,26 +14,23 @@ import torch.nn.functional as F
 from tqdm import tqdm
 from PIL import Image
 
-from train.data_load import CARLA_Data
+from data_load import CARLA_Data
 from model_net.model_net import model_all
 
 
 if __name__ == '__main__':
 
     # 0:all; 1:model_adj_rec; 2:model_feature_rec;
-    train_model = 1
+    train_model = 2
 
     batchsize = 24
     lr = 0.00001
     device = 'cuda:0'
 
-    train_data = ['',
-                  '',
-                  '',
-                  '']
+    train_data_path = ['/home/dataset_ssd/dataset_test1']
 
-    train_data = CARLA_Data(root_path=train_data, batch_size=batchsize)
-    dataloader_train = torch.utils.data.DataLoader(train_data, batch_size=batchsize, shuffle=True, num_workers=8)
+    #train_data = CARLA_Data(root_path=train_data, batch_size=batchsize)
+    #dataloader_train = torch.utils.data.DataLoader(train_data, batch_size=batchsize, shuffle=True, num_workers=4)
 
     A_same_t = np.array([[1, 1, 0, 0, 0, 0, 0, 1],
                          [1, 1, 1, 0, 0, 0, 0, 0],
@@ -63,11 +60,17 @@ if __name__ == '__main__':
     step = 0
 
     loss_model = [[], [], []]
+    accuracy = []
 
-    for epoch in range(21):
-        print('epoch: ', epoch)
+    for epoch in range(11):
+        # print('epoch: ', epoch)
         loss_test = [[], [], []]
-        model_all.load_state_dict(torch.load(os.path.join('./trained_models_1', str(0 + epoch*5) + 'model.pth')))
+        sum_samp = 0
+        true_samp = 0
+        # model_all.load_state_dict(torch.load(os.path.join('./model_fea_rec_step1', str(0 + epoch*5) + 'model.pth')))
+        model_all.load_state_dict(torch.load('./model_fea_rec_step1/170model.pth'))
+        train_data = CARLA_Data(root_path=train_data_path, batch_size=batchsize, attack_level=epoch)
+        dataloader_train = torch.utils.data.DataLoader(train_data, batch_size=batchsize, shuffle=True, num_workers=36)
 
         for i, data in enumerate(tqdm(dataloader_train), 0):
             step = step + 1
@@ -128,10 +131,23 @@ if __name__ == '__main__':
                 # adj rec loss
                 class_labels = torch.stack([class_label for xxx in range(model_all.batch)], dim=0)
                 loss_c = criterion(model_all.node_class[:, node_attack].float(), class_labels.float())
+                sum_samp += 8
+                pre_class = model_all.node_class[:, node_attack].float()
+                pre_class = pre_class[0]
+                # print(pre_class)
+                for p in range(4):
+                    if pre_class[p][1]>pre_class[p][0]:
+                        true_samp += 1
+                for p in range(4,8):
+                    if pre_class[p][0]>pre_class[p][1]:
+                        true_samp += 1
+                # print(true_samp)
+                
+                
                 A_labels = torch.stack([A_label for xxxx in range(model_all.batch)], dim=0)
                 e_clean = torch.sum(torch.mul(model_all.adj_rec, A_labels)) / 20
                 e_att = torch.sum(model_all.adj_rec[:, :, node_attack[0:4]]) / 4
-                loss_e = torch.exp((- e_clean + e_att) / 4)
+                loss_e = torch.exp((- e_clean + e_att) / 24)
                 loss_adj_rec = loss_c + loss_e
 
                 # # feature rec loss
@@ -195,4 +211,6 @@ if __name__ == '__main__':
         print('loss_c: ', loss_model[1])
         loss_model[2].append(torch.mean(torch.tensor(loss_test[2])))
         print('loss_e: ', loss_model[2])
+        # accuracy.append(true_samp/sum_samp)
+        print('accuracy: ', accuracy)
 
